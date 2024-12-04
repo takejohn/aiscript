@@ -15,6 +15,7 @@ import { Variable } from './variable.js';
 import { Reference } from './reference.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn, VUserFn } from './value.js';
+import type { IInterpreter } from './common.js';
 
 export type LogObject = {
 	scope?: string;
@@ -27,7 +28,7 @@ type CallInfo = {
 	pos: Ast.Pos | undefined;
 };
 
-export class Interpreter {
+export class Interpreter implements IInterpreter {
 	public stepCount = 0;
 	private stop = false;
 	private pausing: { promise: Promise<void>, resolve: () => void } | null = null;
