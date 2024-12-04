@@ -3,8 +3,9 @@ import { AiScriptRuntimeError } from '../error.js';
 import type { Value } from './value.js';
 import type { Variable } from './variable.js';
 import type { LogObject } from './index.js';
+import type { IScope } from './common.js';
 
-export class Scope {
+export class Scope implements IScope {
 	private parent?: Scope;
 	private layerdStates: Map<string, Variable>[];
 	public name: string;

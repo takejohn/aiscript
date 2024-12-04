@@ -3,7 +3,7 @@
 //export * as utils from './interpreter/util';
 //export * as values from './interpreter/value';
 import { Interpreter } from './interpreter/index.js';
-import { IInterpreter } from './interpreter/common.js';
+import { IInterpreter, IScope } from './interpreter/common.js';
 import { Scope } from './interpreter/scope.js';
 import * as utils from './interpreter/util.js';
 import * as values from './interpreter/value.js';
@@ -14,6 +14,7 @@ import { AISCRIPT_VERSION } from './constants.js';
 import type { ParserPlugin, PluginType } from './parser/index.js';
 export { Interpreter };
 export { IInterpreter };
+export { IScope };
 export { Scope };
 export { utils };
 export { values };

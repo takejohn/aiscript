@@ -1,12 +1,12 @@
 import type * as Ast from '../node.js';
-import type { Scope } from './scope.js';
 import type { Value, VFn } from './value.js';
+import type { Variable } from './variable.js';
 
 /**
  * プログラムの実行を行うインターフェース。
  */
 export interface IInterpreter {
-	readonly scope: Scope;
+	readonly scope: IScope;
 
 	exec(script?: Ast.Node[]): Promise<void>;
 
@@ -41,4 +41,45 @@ export interface IInterpreter {
 	pause(): void;
 
 	unpause(): void;
+}
+
+export interface IScope {
+	readonly name: string;
+	readonly nsName?: string;
+
+	/**
+	 * 指定した名前の変数を取得します
+	 * @param name - 変数名
+	 */
+	get(name: string): Value;
+
+	/**
+	 * 名前空間名を取得します。
+	 */
+	getNsPrefix(): string;
+
+	/**
+	 * 指定した名前の変数が存在するか判定します
+	 * @param name - 変数名
+	 */
+	exists(name: string): boolean;
+
+	/**
+	 * 現在のスコープに存在する全ての変数を取得します
+	 */
+	getAll(): Map<string, Variable>;
+
+	/**
+	 * 指定した名前の変数を現在のスコープに追加します。名前空間である場合は接頭辞を付して親のスコープにも追加します
+	 * @param name - 変数名
+	 * @param val - 初期値
+	 */
+	add(name: string, variable: Variable): void;
+
+	/**
+	 * 指定した名前の変数に値を再代入します
+	 * @param name - 変数名
+	 * @param val - 値
+	 */
+	assign(name: string, val: Value): void;
 }
