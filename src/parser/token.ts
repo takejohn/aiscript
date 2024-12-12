@@ -111,6 +111,13 @@ export enum TokenKind {
 
 export type TokenPosition = { column: number, line: number };
 
+export type TokenComment = {
+    type: 'line' | 'range';
+	start: TokenPosition;
+	end: TokenPosition;
+    content: string;
+}
+
 export class Token {
 	constructor(
 		public kind: TokenKind,
@@ -120,6 +127,7 @@ export class Token {
 		public value?: string,
 		/** for template syntax */
 		public children?: Token[],
+		public leadingComments?: TokenComment[],
 	) { }
 }
 
@@ -127,6 +135,6 @@ export class Token {
  * - opts.value: for number literal, string literal
  * - opts.children: for template syntax
 */
-export function TOKEN(kind: TokenKind, pos: TokenPosition, opts?: { hasLeftSpacing?: boolean, value?: Token['value'], children?: Token['children'] }): Token {
-	return new Token(kind, pos, opts?.hasLeftSpacing, opts?.value, opts?.children);
+export function TOKEN(kind: TokenKind, pos: TokenPosition, opts?: { hasLeftSpacing?: boolean, value?: Token['value'], children?: Token['children'], leadingComments?: Token['leadingComments'] }): Token {
+	return new Token(kind, pos, opts?.hasLeftSpacing, opts?.value, opts?.children, opts?.leadingComments);
 }

@@ -78,7 +78,7 @@ describe('Scanner', () => {
 		const stream = new Scanner(source);
 		return stream;
 	}
-	function next(stream: Scanner, kind: TokenKind, pos: TokenPosition, opts: { hasLeftSpacing?: boolean, value?: string }) {
+	function next(stream: Scanner, kind: TokenKind, pos: TokenPosition, opts: Parameters<typeof TOKEN>[2]) {
 		assert.deepStrictEqual(stream.getToken(), TOKEN(kind, pos, opts));
 		stream.next();
 	}
@@ -150,7 +150,12 @@ describe('Scanner', () => {
 		next(stream, TokenKind.MatchKeyword, { line: 1, column: 1 }, { });
 		next(stream, TokenKind.NumberLiteral, { line: 1, column: 7 }, { hasLeftSpacing: true, value: '1' });
 		next(stream, TokenKind.OpenBrace, { line: 1, column: 8 }, { });
-		next(stream, TokenKind.NewLine, { line: 1, column: 9 }, { });
+		next(stream, TokenKind.NewLine, { line: 1, column: 9 }, { leadingComments: [{
+			type: 'line',
+			start: { line: 2, column: 1 },
+			end: { line: 2, column: 11 },
+			content: ' comment',
+		}] });
 		next(stream, TokenKind.CloseBrace, { line: 3, column: 1 }, { });
 		next(stream, TokenKind.EOF, { line: 3, column: 2 }, { });
 	});

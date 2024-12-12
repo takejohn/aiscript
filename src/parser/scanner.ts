@@ -4,7 +4,7 @@ import { TOKEN, TokenKind } from './token.js';
 import { unexpectedTokenError } from './utils.js';
 
 import type { ITokenStream } from './streams/token-stream.js';
-import type { Token, TokenPosition } from './token.js';
+import type { Token, TokenComment, TokenPosition } from './token.js';
 
 const spaceChars = [' ', '\t'];
 const lineBreakChars = ['\r', '\n'];
@@ -17,6 +17,7 @@ const wordChar = /^[A-Za-z0-9_]$/;
 export class Scanner implements ITokenStream {
 	private stream: CharStream;
 	private _tokens: Token[] = [];
+	private comments: TokenComment[] = [];
 
 	constructor(source: string)
 	constructor(stream: CharStream)
@@ -106,7 +107,7 @@ export class Scanner implements ITokenStream {
 
 		while (true) {
 			if (this.stream.eof) {
-				return TOKEN(TokenKind.EOF, this.stream.getPos(), { hasLeftSpacing });
+				return this.TOKEN(TokenKind.EOF, this.stream.getPos(), { hasLeftSpacing });
 			}
 			// skip spasing
 			if (spaceChars.includes(this.stream.char)) {
@@ -120,7 +121,7 @@ export class Scanner implements ITokenStream {
 
 			if (lineBreakChars.includes(this.stream.char)) {
 				this.skipEmptyLines();
-				return TOKEN(TokenKind.NewLine, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.NewLine, pos, { hasLeftSpacing });
 			}
 
 			// noFallthroughCasesInSwitchと関数の返り値の型を利用し、全ての場合分けがreturnかcontinueで適切に処理されることを強制している
@@ -130,9 +131,9 @@ export class Scanner implements ITokenStream {
 					this.stream.next();
 					if (!this.stream.eof && (this.stream.char as string) === '=') {
 						this.stream.next();
-						return TOKEN(TokenKind.NotEq, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.NotEq, pos, { hasLeftSpacing });
 					} else {
-						return TOKEN(TokenKind.Not, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Not, pos, { hasLeftSpacing });
 					}
 				}
 				case '"':
@@ -145,171 +146,172 @@ export class Scanner implements ITokenStream {
 						this.stream.next();
 						if (!this.stream.eof && (this.stream.char as string) === '#') {
 							this.stream.next();
-							return TOKEN(TokenKind.Sharp3, pos, { hasLeftSpacing });
+							return this.TOKEN(TokenKind.Sharp3, pos, { hasLeftSpacing });
 						} else {
 							throw new AiScriptSyntaxError('invalid sequence of characters: "##"', pos);
 						}
 					} else if (!this.stream.eof && (this.stream.char as string) === '[') {
 						this.stream.next();
-						return TOKEN(TokenKind.OpenSharpBracket, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.OpenSharpBracket, pos, { hasLeftSpacing });
 					} else {
 						throw new AiScriptSyntaxError('invalid character: "#"', pos);
 					}
 				}
 				case '%': {
 					this.stream.next();
-					return TOKEN(TokenKind.Percent, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.Percent, pos, { hasLeftSpacing });
 				}
 				case '&': {
 					this.stream.next();
 					if (!this.stream.eof && (this.stream.char as string) === '&') {
 						this.stream.next();
-						return TOKEN(TokenKind.And2, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.And2, pos, { hasLeftSpacing });
 					} else {
 						throw new AiScriptSyntaxError('invalid character: "&"', pos);
 					}
 				}
 				case '(': {
 					this.stream.next();
-					return TOKEN(TokenKind.OpenParen, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.OpenParen, pos, { hasLeftSpacing });
 				}
 				case ')': {
 					this.stream.next();
-					return TOKEN(TokenKind.CloseParen, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.CloseParen, pos, { hasLeftSpacing });
 				}
 				case '*': {
 					this.stream.next();
-					return TOKEN(TokenKind.Asterisk, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.Asterisk, pos, { hasLeftSpacing });
 				}
 				case '+': {
 					this.stream.next();
 					if (!this.stream.eof && (this.stream.char as string) === '=') {
 						this.stream.next();
-						return TOKEN(TokenKind.PlusEq, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.PlusEq, pos, { hasLeftSpacing });
 					} else {
-						return TOKEN(TokenKind.Plus, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Plus, pos, { hasLeftSpacing });
 					}
 				}
 				case ',': {
 					this.stream.next();
-					return TOKEN(TokenKind.Comma, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.Comma, pos, { hasLeftSpacing });
 				}
 				case '-': {
 					this.stream.next();
 					if (!this.stream.eof && (this.stream.char as string) === '=') {
 						this.stream.next();
-						return TOKEN(TokenKind.MinusEq, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.MinusEq, pos, { hasLeftSpacing });
 					} else {
-						return TOKEN(TokenKind.Minus, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Minus, pos, { hasLeftSpacing });
 					}
 				}
 				case '.': {
 					this.stream.next();
-					return TOKEN(TokenKind.Dot, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.Dot, pos, { hasLeftSpacing });
 				}
 				case '/': {
+					const startPos = this.stream.getPos();
 					this.stream.next();
 					if (!this.stream.eof && (this.stream.char as string) === '*') {
 						this.stream.next();
-						this.skipCommentRange();
+						this.skipCommentRange(startPos);
 						continue;
 					} else if (!this.stream.eof && (this.stream.char as string) === '/') {
 						this.stream.next();
-						this.skipCommentLine();
+						this.skipCommentLine(startPos);
 						continue;
 					} else {
-						return TOKEN(TokenKind.Slash, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Slash, pos, { hasLeftSpacing });
 					}
 				}
 				case ':': {
 					this.stream.next();
 					if (!this.stream.eof && (this.stream.char as string) === ':') {
 						this.stream.next();
-						return TOKEN(TokenKind.Colon2, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Colon2, pos, { hasLeftSpacing });
 					} else {
-						return TOKEN(TokenKind.Colon, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Colon, pos, { hasLeftSpacing });
 					}
 				}
 				case ';': {
 					this.stream.next();
-					return TOKEN(TokenKind.SemiColon, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.SemiColon, pos, { hasLeftSpacing });
 				}
 				case '<': {
 					this.stream.next();
 					if (!this.stream.eof && (this.stream.char as string) === '=') {
 						this.stream.next();
-						return TOKEN(TokenKind.LtEq, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.LtEq, pos, { hasLeftSpacing });
 					} else if (!this.stream.eof && (this.stream.char as string) === ':') {
 						this.stream.next();
-						return TOKEN(TokenKind.Out, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Out, pos, { hasLeftSpacing });
 					} else {
-						return TOKEN(TokenKind.Lt, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Lt, pos, { hasLeftSpacing });
 					}
 				}
 				case '=': {
 					this.stream.next();
 					if (!this.stream.eof && (this.stream.char as string) === '=') {
 						this.stream.next();
-						return TOKEN(TokenKind.Eq2, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Eq2, pos, { hasLeftSpacing });
 					} else if (!this.stream.eof && (this.stream.char as string) === '>') {
 						this.stream.next();
-						return TOKEN(TokenKind.Arrow, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Arrow, pos, { hasLeftSpacing });
 					} else {
-						return TOKEN(TokenKind.Eq, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Eq, pos, { hasLeftSpacing });
 					}
 				}
 				case '>': {
 					this.stream.next();
 					if (!this.stream.eof && (this.stream.char as string) === '=') {
 						this.stream.next();
-						return TOKEN(TokenKind.GtEq, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.GtEq, pos, { hasLeftSpacing });
 					} else {
-						return TOKEN(TokenKind.Gt, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Gt, pos, { hasLeftSpacing });
 					}
 				}
 				case '?': {
 					this.stream.next();
-					return TOKEN(TokenKind.Question, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.Question, pos, { hasLeftSpacing });
 				}
 				case '@': {
 					this.stream.next();
-					return TOKEN(TokenKind.At, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.At, pos, { hasLeftSpacing });
 				}
 				case '[': {
 					this.stream.next();
-					return TOKEN(TokenKind.OpenBracket, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.OpenBracket, pos, { hasLeftSpacing });
 				}
 				case '\\': {
 					this.stream.next();
-					return TOKEN(TokenKind.BackSlash, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.BackSlash, pos, { hasLeftSpacing });
 				}
 				case ']': {
 					this.stream.next();
-					return TOKEN(TokenKind.CloseBracket, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.CloseBracket, pos, { hasLeftSpacing });
 				}
 				case '^': {
 					this.stream.next();
-					return TOKEN(TokenKind.Hat, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.Hat, pos, { hasLeftSpacing });
 				}
 				case '`': {
 					return this.readTemplate(hasLeftSpacing);
 				}
 				case '{': {
 					this.stream.next();
-					return TOKEN(TokenKind.OpenBrace, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.OpenBrace, pos, { hasLeftSpacing });
 				}
 				case '|': {
 					this.stream.next();
 					if (!this.stream.eof && (this.stream.char as string) === '|') {
 						this.stream.next();
-						return TOKEN(TokenKind.Or2, pos, { hasLeftSpacing });
+						return this.TOKEN(TokenKind.Or2, pos, { hasLeftSpacing });
 					} else {
 						throw new AiScriptSyntaxError('invalid character: "|"', pos);
 					}
 				}
 				case '}': {
 					this.stream.next();
-					return TOKEN(TokenKind.CloseBrace, pos, { hasLeftSpacing });
+					return this.TOKEN(TokenKind.CloseBrace, pos, { hasLeftSpacing });
 				}
 				default: {
 					const digitToken = this.tryReadDigits(hasLeftSpacing);
@@ -345,70 +347,70 @@ export class Scanner implements ITokenStream {
 		// check word kind
 		switch (value) {
 			case 'null': {
-				return TOKEN(TokenKind.NullKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.NullKeyword, pos, { hasLeftSpacing });
 			}
 			case 'true': {
-				return TOKEN(TokenKind.TrueKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.TrueKeyword, pos, { hasLeftSpacing });
 			}
 			case 'false': {
-				return TOKEN(TokenKind.FalseKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.FalseKeyword, pos, { hasLeftSpacing });
 			}
 			case 'each': {
-				return TOKEN(TokenKind.EachKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.EachKeyword, pos, { hasLeftSpacing });
 			}
 			case 'for': {
-				return TOKEN(TokenKind.ForKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.ForKeyword, pos, { hasLeftSpacing });
 			}
 			case 'loop': {
-				return TOKEN(TokenKind.LoopKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.LoopKeyword, pos, { hasLeftSpacing });
 			}
 			case 'do': {
-				return TOKEN(TokenKind.DoKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.DoKeyword, pos, { hasLeftSpacing });
 			}
 			case 'while': {
-				return TOKEN(TokenKind.WhileKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.WhileKeyword, pos, { hasLeftSpacing });
 			}
 			case 'break': {
-				return TOKEN(TokenKind.BreakKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.BreakKeyword, pos, { hasLeftSpacing });
 			}
 			case 'continue': {
-				return TOKEN(TokenKind.ContinueKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.ContinueKeyword, pos, { hasLeftSpacing });
 			}
 			case 'match': {
-				return TOKEN(TokenKind.MatchKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.MatchKeyword, pos, { hasLeftSpacing });
 			}
 			case 'case': {
-				return TOKEN(TokenKind.CaseKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.CaseKeyword, pos, { hasLeftSpacing });
 			}
 			case 'default': {
-				return TOKEN(TokenKind.DefaultKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.DefaultKeyword, pos, { hasLeftSpacing });
 			}
 			case 'if': {
-				return TOKEN(TokenKind.IfKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.IfKeyword, pos, { hasLeftSpacing });
 			}
 			case 'elif': {
-				return TOKEN(TokenKind.ElifKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.ElifKeyword, pos, { hasLeftSpacing });
 			}
 			case 'else': {
-				return TOKEN(TokenKind.ElseKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.ElseKeyword, pos, { hasLeftSpacing });
 			}
 			case 'return': {
-				return TOKEN(TokenKind.ReturnKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.ReturnKeyword, pos, { hasLeftSpacing });
 			}
 			case 'eval': {
-				return TOKEN(TokenKind.EvalKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.EvalKeyword, pos, { hasLeftSpacing });
 			}
 			case 'var': {
-				return TOKEN(TokenKind.VarKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.VarKeyword, pos, { hasLeftSpacing });
 			}
 			case 'let': {
-				return TOKEN(TokenKind.LetKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.LetKeyword, pos, { hasLeftSpacing });
 			}
 			case 'exists': {
-				return TOKEN(TokenKind.ExistsKeyword, pos, { hasLeftSpacing });
+				return this.TOKEN(TokenKind.ExistsKeyword, pos, { hasLeftSpacing });
 			}
 			default: {
-				return TOKEN(TokenKind.Identifier, pos, { hasLeftSpacing, value });
+				return this.TOKEN(TokenKind.Identifier, pos, { hasLeftSpacing, value });
 			}
 		}
 	}
@@ -442,7 +444,7 @@ export class Scanner implements ITokenStream {
 		} else {
 			value = wholeNumber;
 		}
-		return TOKEN(TokenKind.NumberLiteral, pos, { hasLeftSpacing, value });
+		return this.TOKEN(TokenKind.NumberLiteral, pos, { hasLeftSpacing, value });
 	}
 
 	private readStringLiteral(hasLeftSpacing: boolean): Token {
@@ -484,7 +486,7 @@ export class Scanner implements ITokenStream {
 				}
 			}
 		}
-		return TOKEN(TokenKind.StringLiteral, pos, { hasLeftSpacing, value });
+		return this.TOKEN(TokenKind.StringLiteral, pos, { hasLeftSpacing, value });
 	}
 
 	private readTemplate(hasLeftSpacing: boolean): Token {
@@ -515,7 +517,7 @@ export class Scanner implements ITokenStream {
 					if (this.stream.char === '`') {
 						this.stream.next();
 						if (buf.length > 0) {
-							elements.push(TOKEN(TokenKind.TemplateStringElement, elementPos, { hasLeftSpacing, value: buf }));
+							elements.push(this.TOKEN(TokenKind.TemplateStringElement, elementPos, { hasLeftSpacing, value: buf }));
 						}
 						state = 'finish';
 						break;
@@ -524,7 +526,7 @@ export class Scanner implements ITokenStream {
 					if (this.stream.char === '{') {
 						this.stream.next();
 						if (buf.length > 0) {
-							elements.push(TOKEN(TokenKind.TemplateStringElement, elementPos, { hasLeftSpacing, value: buf }));
+							elements.push(this.TOKEN(TokenKind.TemplateStringElement, elementPos, { hasLeftSpacing, value: buf }));
 							buf = '';
 						}
 						// ここから式エレメントになるので位置を更新
@@ -564,11 +566,11 @@ export class Scanner implements ITokenStream {
 					if ((this.stream.char as string) === '}') {
 						// 埋め込み式の終了
 						if (exprBracketDepth === 0) {
-							elements.push(TOKEN(TokenKind.TemplateExprElement, elementPos, { hasLeftSpacing, children: tokenBuf }));
+							elements.push(this.TOKEN(TokenKind.TemplateExprElement, elementPos, { hasLeftSpacing, children: tokenBuf }));
 							// ここから文字列エレメントになるので位置を更新
 							elementPos = this.stream.getPos();
 							// TemplateExprElementトークンの終了位置をTokenStreamが取得するためのEOFトークンを追加
-							tokenBuf.push(TOKEN(TokenKind.EOF, elementPos));
+							tokenBuf.push(this.TOKEN(TokenKind.EOF, elementPos));
 							tokenBuf = [];
 							state = 'string';
 							this.stream.next();
@@ -583,7 +585,7 @@ export class Scanner implements ITokenStream {
 			}
 		}
 
-		return TOKEN(TokenKind.Template, pos, { hasLeftSpacing, children: elements });
+		return this.TOKEN(TokenKind.Template, pos, { hasLeftSpacing, children: elements });
 	}
 
 	private skipEmptyLines(): void {
@@ -594,15 +596,16 @@ export class Scanner implements ITokenStream {
 				continue;
 			}
 
+			const startPos = this.stream.getPos();
 			if (this.stream.char === '/') {
 				this.stream.next();
 				if (!this.stream.eof && (this.stream.char as string) === '*') {
 					this.stream.next();
-					this.skipCommentRange();
+					this.skipCommentRange(startPos);
 					continue;
 				} else if (!this.stream.eof && (this.stream.char as string) === '/') {
 					this.stream.next();
-					this.skipCommentLine();
+					this.skipCommentLine(startPos);
 					continue;
 				} else {
 					this.stream.prev();
@@ -613,7 +616,8 @@ export class Scanner implements ITokenStream {
 		}
 	}
 
-	private skipCommentLine(): void {
+	private skipCommentLine(startPos: TokenPosition): void {
+		let content = '';
 		while (true) {
 			if (this.stream.eof) {
 				break;
@@ -621,11 +625,19 @@ export class Scanner implements ITokenStream {
 			if (this.stream.char === '\n') {
 				break;
 			}
+			content += this.stream.char;
 			this.stream.next();
 		}
+		this.comments.push({
+			type: 'line',
+			start: startPos,
+			end: this.stream.getPos(),
+			content,
+		});
 	}
 
-	private skipCommentRange(): void {
+	private skipCommentRange(startPos: TokenPosition): void {
+		let content = '';
 		while (true) {
 			if (this.stream.eof) {
 				break;
@@ -634,11 +646,29 @@ export class Scanner implements ITokenStream {
 				this.stream.next();
 				if ((this.stream.char as string) === '/') {
 					this.stream.next();
+					this.comments.push({
+						type: 'range',
+						start: startPos,
+						end: this.stream.getPos(),
+						content,
+					});
 					break;
 				}
+				content += '*';
 				continue;
 			}
+			content += this.stream.char;
 			this.stream.next();
+		}
+	}
+
+	private TOKEN(kind: TokenKind, pos: TokenPosition, opts?: { hasLeftSpacing?: boolean, value?: Token['value'], children?: Token['children'] }): Token {
+		const comments = this.comments;
+		if (comments.length === 0) {
+			return TOKEN(kind, pos, opts);
+		} else {
+			this.comments = [];
+			return TOKEN(kind, pos, { ...opts, leadingComments: comments });
 		}
 	}
 }
