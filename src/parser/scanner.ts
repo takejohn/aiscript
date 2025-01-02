@@ -306,7 +306,7 @@ export class Scanner implements ITokenStream {
 						this.stream.next();
 						return this.TOKEN(TokenKind.Or2, pos, { hasLeftSpacing });
 					} else {
-						throw new AiScriptSyntaxError('invalid character: "|"', pos);
+						return TOKEN(TokenKind.Or, pos, { hasLeftSpacing });
 					}
 				}
 				case '}': {
