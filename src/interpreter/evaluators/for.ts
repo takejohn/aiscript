@@ -1,0 +1,123 @@
+import { NULL, NUM } from '../value.js';
+import { isControl, type Control } from '../control.js';
+import { assertNumber } from '../util.js';
+import type { Ast } from '../../index.js';
+import type { Value } from '../value.js';
+import type { Scope } from '../scope.js';
+import type { CallInfo, Evaluator, AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
+
+export class ForEvaluator implements Evaluator<Ast.For> {
+	async evalAsync(context: AsyncEvaluatorContext, node: Ast.For, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
+		if (node.times) {
+			const times = await context.eval(node.times, scope, callStack);
+			if (isControl(times)) {
+				return times;
+			}
+			assertNumber(times);
+			for (let i = 0; i < times.value; i++) {
+				const v = await context.evalClause(node.for, scope, callStack);
+				if (v.type === 'break') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+					break;
+				} else if (v.type === 'continue') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+				} else if (v.type === 'return') {
+					return v;
+				}
+			}
+		} else {
+			const from = await context.eval(node.from!, scope, callStack);
+			if (isControl(from)) {
+				return from;
+			}
+			const to = await context.eval(node.to!, scope, callStack);
+			if (isControl(to)) {
+				return to;
+			}
+			assertNumber(from);
+			assertNumber(to);
+			for (let i = from.value; i < from.value + to.value; i++) {
+				const v = await context.eval(node.for, scope.createChildScope(new Map([
+					[node.var!, {
+						isMutable: false,
+						value: NUM(i),
+					}],
+				])), callStack);
+				if (v.type === 'break') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+					break;
+				} else if (v.type === 'continue') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+				} else if (v.type === 'return') {
+					return v;
+				}
+			}
+		}
+		return NULL;
+	}
+
+	evalSync(context: SyncEvaluatorContext, node: Ast.For, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
+		if (node.times) {
+			const times = context.eval(node.times, scope, callStack);
+			if (isControl(times)) {
+				return times;
+			}
+			assertNumber(times);
+			for (let i = 0; i < times.value; i++) {
+				const v = context.evalClause(node.for, scope, callStack);
+				if (v.type === 'break') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+					break;
+				} else if (v.type === 'continue') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+				} else if (v.type === 'return') {
+					return v;
+				}
+			}
+		} else {
+			const from = context.eval(node.from!, scope, callStack);
+			if (isControl(from)) {
+				return from;
+			}
+			const to = context.eval(node.to!, scope, callStack);
+			if (isControl(to)) {
+				return to;
+			}
+			assertNumber(from);
+			assertNumber(to);
+			for (let i = from.value; i < from.value + to.value; i++) {
+				const v = context.eval(node.for, scope.createChildScope(new Map([
+					[node.var!, {
+						isMutable: false,
+						value: NUM(i),
+					}],
+				])), callStack);
+				if (v.type === 'break') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+					break;
+				} else if (v.type === 'continue') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+				} else if (v.type === 'return') {
+					return v;
+				}
+			}
+		}
+		return NULL;
+	}
+};

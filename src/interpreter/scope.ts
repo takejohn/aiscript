@@ -2,7 +2,7 @@ import { autobind } from '../utils/mini-autobind.js';
 import { AiScriptRuntimeError } from '../error.js';
 import type { Value } from './value.js';
 import type { Variable } from './variable.js';
-import type { LogObject } from './index.js';
+import type { LogObject } from './context.js';
 
 export class Scope {
 	private parent?: Scope;
