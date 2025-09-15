@@ -1,6 +1,7 @@
 import { NULL } from '../value.js';
 import { assertValue, isControl, type Control } from '../control.js';
 import { isFunction } from '../util.js';
+import { define } from '../define.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
@@ -32,7 +33,7 @@ export class DefinitionEvaluator implements Evaluator<Ast.Definition> {
 		) {
 			value.name = node.dest.name;
 		}
-		context.define(scope, node.dest, value, node.mut);
+		define(scope, node.dest, value, node.mut);
 		return NULL;
 	}
 
@@ -61,7 +62,7 @@ export class DefinitionEvaluator implements Evaluator<Ast.Definition> {
 		) {
 			value.name = node.dest.name;
 		}
-		context.define(scope, node.dest, value, node.mut);
+		define(scope, node.dest, value, node.mut);
 		return NULL;
 	}
 };

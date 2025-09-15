@@ -1,7 +1,7 @@
+import { type Value, type VFn } from './value.js';
 import type { Variable } from './variable.js';
 import type { Reference } from './reference.js';
 import type { Control } from './control.js';
-import type { Value, VFn } from './value.js';
 import type { Ast, Scope } from '../index.js';
 
 export type LogObject = {
@@ -33,8 +33,6 @@ export interface Evaluator<N extends Ast.Node> {
 
 interface EvaluatorContextBase {
 	log(type: string, params: LogObject): void;
-
-	define(scope: Scope, dest: Ast.Expression, value: Value, isMutable: boolean): void;
 }
 
 export interface AsyncEvaluatorContext extends EvaluatorContextBase {

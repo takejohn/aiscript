@@ -9,11 +9,12 @@ import { nodeToJs } from '../utils/node-to-js.js';
 import { Scope } from './scope.js';
 import { std } from './lib/std.js';
 import { unWrapRet, assertValue, isControl, type Control } from './control.js';
-import { assertNumber, assertString, assertObject, assertArray, isObject, isArray, expectAny, reprValue, isFunction } from './util.js';
+import { assertNumber, assertString, assertObject, isObject, isArray, expectAny, reprValue, isFunction } from './util.js';
 import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
 import { Reference } from './reference.js';
 import { evaluateAsync, evaluateSync } from './evaluate.js';
+import { define } from './define.js';
 import type { AsyncEvaluatorContext, CallInfo, LogObject, SyncEvaluatorContext } from './context.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn } from './value.js';
@@ -37,7 +38,6 @@ export class Interpreter {
 		getReference: (dest: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Reference | Control> => this.getReference(dest, scope, callStack),
 		run: (program: Ast.Node[], scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> => this._run(program, scope, callStack),
 		log: (type: string, params: LogObject): void => this.log(type, params),
-		define: (scope: Scope, dest: Ast.Expression, value: Value, isMutable: boolean): void => this.define(scope, dest, value, isMutable),
 	};
 
 	private syncEvaluatorContext: SyncEvaluatorContext = {
@@ -47,7 +47,6 @@ export class Interpreter {
 		getReference: (dest: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Reference | Control => this.getReferenceSync(dest, scope, callStack),
 		run: (program: Ast.Node[], scope: Scope, callStack: readonly CallInfo[]): Value | Control => this._runSync(program, scope, callStack),
 		log: (type: string, params: LogObject): void => this.log(type, params),
-		define: (scope: Scope, dest: Ast.Expression, value: Value, isMutable: boolean): void => this.define(scope, dest, value, isMutable),
 	};
 
 	constructor(
@@ -275,7 +274,7 @@ export class Interpreter {
 					) {
 						value.name = nsScope.getNsPrefix() + node.dest.name;
 					}
-					this.define(nsScope, node.dest, value, node.mut);
+					define(nsScope, node.dest, value, node.mut);
 
 					break;
 				}
@@ -319,7 +318,7 @@ export class Interpreter {
 					) {
 						value.name = nsScope.getNsPrefix() + node.dest.name;
 					}
-					this.define(nsScope, node.dest, value, node.mut);
+					define(nsScope, node.dest, value, node.mut);
 
 					break;
 				}
@@ -359,7 +358,7 @@ export class Interpreter {
 			for (const [i, param] of fn.params.entries()) {
 				const arg = args[i];
 				if (!param.default) expectAny(arg);
-				this.define(fnScope, param.dest, arg ?? param.default!, true);
+				define(fnScope, param.dest, arg ?? param.default!, true);
 			}
 
 			const info: CallInfo = { name: fn.name ?? '<anonymous>', pos };
@@ -400,7 +399,7 @@ export class Interpreter {
 			for (const [i, param] of fn.params.entries()) {
 				const arg = args[i];
 				if (!param.default) expectAny(arg);
-				this.define(fnScope, param.dest, arg ?? param.default!, true);
+				define(fnScope, param.dest, arg ?? param.default!, true);
 			}
 
 			const info: CallInfo = { name: fn.name ?? '<anonymous>', pos };
@@ -580,33 +579,6 @@ export class Interpreter {
 			handler();
 		}
 		this.unpauseHandlers = [];
-	}
-
-	@autobind
-	private define(scope: Scope, dest: Ast.Expression, value: Value, isMutable: boolean): void {
-		switch (dest.type) {
-			case 'identifier': {
-				scope.add(dest.name, { isMutable, value });
-				break;
-			}
-			case 'arr': {
-				assertArray(value);
-				dest.value.map(
-					(item, index) => this.define(scope, item, value.value[index] ?? NULL, isMutable),
-				);
-				break;
-			}
-			case 'obj': {
-				assertObject(value);
-				[...dest.value].map(
-					([key, item]) => this.define(scope, item, value.value.get(key) ?? NULL, isMutable),
-				);
-				break;
-			}
-			default: {
-				throw new AiScriptRuntimeError('The left-hand side of an definition expression must be a variable.');
-			}
-		}
 	}
 
 	@autobind

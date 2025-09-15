@@ -1,6 +1,7 @@
 import { NULL } from '../value.js';
 import { isControl, type Control } from '../control.js';
 import { assertArray } from '../util.js';
+import { define } from '../define.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
@@ -15,7 +16,7 @@ export class EachEvaluator implements Evaluator<Ast.Node> {
 		assertArray(items);
 		for (const item of items.value) {
 			const eachScope = scope.createChildScope();
-			context.define(eachScope, node.var, item, false);
+			define(eachScope, node.var, item, false);
 			const v = await context.eval(node.for, eachScope, callStack);
 			if (v.type === 'break') {
 				if (v.label != null && v.label !== node.label) {
@@ -41,7 +42,7 @@ export class EachEvaluator implements Evaluator<Ast.Node> {
 		assertArray(items);
 		for (const item of items.value) {
 			const eachScope = scope.createChildScope();
-			context.define(eachScope, node.var, item, false);
+			define(eachScope, node.var, item, false);
 			const v = context.eval(node.for, eachScope, callStack);
 			if (v.type === 'break') {
 				if (v.label != null && v.label !== node.label) {
