@@ -14,7 +14,7 @@ import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
 import { evaluateAsync, evaluateSync } from './evaluate.js';
 import { define } from './define.js';
-import { LifecycleManager } from './lifecycle.js';
+import { LifecycleManager } from './lifecycle/manager.js';
 import type { CallInfo, LogObject } from './types.js';
 import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { JsValue } from './util.js';
@@ -504,28 +504,28 @@ export class Interpreter {
 
 	@autobind
 	public registerAbortHandler(handler: () => void): void {
-		this.lifecycleManager.registerAbortHandler(handler);
+		this.lifecycleManager.abortHandlers.register(handler);
 	}
 	@autobind
 	public registerPauseHandler(handler: () => void): void {
-		this.lifecycleManager.registerPauseHandler(handler);
+		this.lifecycleManager.pauseHandlers.register(handler);
 	}
 	@autobind
 	public registerUnpauseHandler(handler: () => void): void {
-		this.lifecycleManager.registerUnpauseHandler(handler);
+		this.lifecycleManager.unpauseHandlers.register(handler);
 	}
 
 	@autobind
 	public unregisterAbortHandler(handler: () => void): void {
-		this.lifecycleManager.registerAbortHandler(handler);
+		this.lifecycleManager.abortHandlers.unregister(handler);
 	}
 	@autobind
 	public unregisterPauseHandler(handler: () => void): void {
-		this.lifecycleManager.unregisterPauseHandler(handler);
+		this.lifecycleManager.pauseHandlers.unregister(handler);
 	}
 	@autobind
 	public unregisterUnpauseHandler(handler: () => void): void {
-		this.lifecycleManager.unregisterPauseHandler(handler);
+		this.lifecycleManager.unpauseHandlers.unregister(handler);
 	}
 
 	@autobind
