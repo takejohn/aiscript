@@ -24,7 +24,6 @@ export class Interpreter {
 	public stepCount = 0;
 	public scope: Scope;
 	private lifecycleManager = new LifecycleManager();
-	private vars: Record<string, Variable> = {};
 	private irqRate: number;
 	private irqSleep: () => Promise<void>;
 
@@ -71,13 +70,13 @@ export class Interpreter {
 			}),
 		};
 
-		this.vars = Object.fromEntries(Object.entries({
+		const vars: Record<string, Variable> = Object.fromEntries(Object.entries({
 			...consts,
 			...std,
 			...io,
 		}).map(([k, v]) => [k, Variable.const(v)]));
 
-		this.scope = new Scope([new Map(Object.entries(this.vars))]);
+		this.scope = new Scope([new Map(Object.entries(vars))]);
 		this.scope.opts.log = (type, params): void => {
 			switch (type) {
 				case 'add': this.log('var:add', params); break;
