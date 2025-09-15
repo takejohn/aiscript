@@ -9,11 +9,11 @@ import { nodeToJs } from '../utils/node-to-js.js';
 import { Scope } from './scope.js';
 import { std } from './lib/std.js';
 import { unWrapRet, assertValue, isControl, type Control } from './control.js';
-import { assertNumber, assertString, assertFunction, assertObject, assertArray, isObject, isArray, expectAny, reprValue, isFunction } from './util.js';
+import { assertNumber, assertString, assertObject, assertArray, isObject, isArray, expectAny, reprValue, isFunction } from './util.js';
 import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
 import { Reference } from './reference.js';
-import { selectEvaluator } from './select-evaluator.js';
+import { evaluateAsync, evaluateSync } from './evaluate.js';
 import type { AsyncEvaluatorContext, CallInfo, LogObject, SyncEvaluatorContext } from './context.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn } from './value.js';
@@ -457,7 +457,7 @@ export class Interpreter {
 			throw new AiScriptRuntimeError('max step exceeded');
 		}
 
-		return selectEvaluator(node.type).evalAsync(this.asyncEvaluatorContext, node, scope, callStack);
+		return evaluateAsync(this.asyncEvaluatorContext, node, scope, callStack);
 	}
 
 	@autobind
@@ -469,7 +469,7 @@ export class Interpreter {
 			throw new AiScriptRuntimeError('max step exceeded');
 		}
 
-		return selectEvaluator(node.type).evalSync(this.syncEvaluatorContext, node, scope, callStack);
+		return evaluateSync(this.syncEvaluatorContext, node, scope, callStack);
 	}
 
 	@autobind

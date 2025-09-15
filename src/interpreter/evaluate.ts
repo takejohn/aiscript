@@ -30,8 +30,10 @@ import { OrEvaluator } from './evaluators/or.js';
 import { IndexEvaluator } from './evaluators/index.js';
 import { NeverEvaluator } from './evaluators/never.js';
 import { BOOL, NULL, NUM, STR } from './value.js';
-import type { Evaluator } from './context.js';
-import type { Ast } from '../index.js';
+import type { Control } from './control.js';
+import type { Value } from './value.js';
+import type { AsyncEvaluatorContext, CallInfo, Evaluator, SyncEvaluatorContext } from './context.js';
+import type { Ast, Scope } from '../index.js';
 
 const evaluatorMap: { [T in Ast.Node['type']]: Evaluator<Ast.Node & { type: T }>} = {
 	'call': new CallEvaluator(),
@@ -85,6 +87,22 @@ const evaluatorMap: { [T in Ast.Node['type']]: Evaluator<Ast.Node & { type: T }>
 	'attr': new NeverEvaluator(),
 };
 
-export function selectEvaluator<N extends Ast.Node>(type: N['type']): Evaluator<N> {
-	return evaluatorMap[type];
+export async function evaluateAsync<T extends Ast.Node['type']>(
+	context: AsyncEvaluatorContext,
+	node: Ast.Node & { type: T },
+	scope: Scope,
+	callStack: readonly CallInfo[]
+): Promise<Value | Control> {
+	const evaluator = evaluatorMap[node.type];
+	return await evaluator.evalAsync(context, node, scope, callStack);
+}
+
+export function evaluateSync<T extends Ast.Node['type']>(
+	context: SyncEvaluatorContext,
+	node: Ast.Node & { type: T },
+	scope: Scope,
+	callStack: readonly CallInfo[]
+): Value | Control {
+	const evaluator = evaluatorMap[node.type];
+	return evaluator.evalSync(context, node, scope, callStack);
 }
