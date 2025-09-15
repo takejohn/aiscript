@@ -15,7 +15,8 @@ import { Variable } from './variable.js';
 import { Reference } from './reference.js';
 import { evaluateAsync, evaluateSync } from './evaluate.js';
 import { define } from './define.js';
-import type { AsyncEvaluatorContext, CallInfo, LogObject, SyncEvaluatorContext } from './context.js';
+import type { CallInfo, LogObject } from './types.js';
+import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn } from './value.js';
 

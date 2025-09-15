@@ -4,7 +4,8 @@ import { assertNumber } from '../util.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { CallInfo, Evaluator, AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
+import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
+import type { CallInfo, Evaluator } from '../types.js';
 
 export class MinusEvaluator implements Evaluator<Ast.Minus> {
 	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Minus, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {

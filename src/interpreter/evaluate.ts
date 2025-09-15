@@ -30,9 +30,10 @@ import { OrEvaluator } from './evaluators/or.js';
 import { IndexEvaluator } from './evaluators/index.js';
 import { NeverEvaluator } from './evaluators/never.js';
 import { BOOL, NULL, NUM, STR } from './value.js';
+import type { CallInfo, Evaluator } from './types.js';
 import type { Control } from './control.js';
 import type { Value } from './value.js';
-import type { AsyncEvaluatorContext, CallInfo, Evaluator, SyncEvaluatorContext } from './context.js';
+import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { Ast, Scope } from '../index.js';
 
 const evaluatorMap: { [T in Ast.Node['type']]: Evaluator<Ast.Node & { type: T }>} = {

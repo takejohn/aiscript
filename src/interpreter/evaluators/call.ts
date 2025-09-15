@@ -2,7 +2,8 @@ import { isControl, type Control } from '../control.js';
 import { assertFunction } from '../util.js';
 import type { Ast } from '../../index.js';
 import type { Scope } from '../scope.js';
-import type { CallInfo, Evaluator, AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
+import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
+import type { CallInfo, Evaluator } from '../types.js';
 import type { Value } from '../value.js';
 
 export class CallEvaluator implements Evaluator<Ast.Call> {

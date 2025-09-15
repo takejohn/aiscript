@@ -5,7 +5,8 @@ import { getPrimProp } from '../primitive-props.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { CallInfo, Evaluator, AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
+import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
+import type { CallInfo, Evaluator } from '../types.js';
 
 export class PropEvaluator implements Evaluator<Ast.Prop> {
 	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Prop, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {

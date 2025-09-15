@@ -1,35 +1,8 @@
 import { type Value, type VFn } from './value.js';
-import type { Variable } from './variable.js';
 import type { Reference } from './reference.js';
 import type { Control } from './control.js';
 import type { Ast, Scope } from '../index.js';
-
-export type LogObject = {
-	scope?: string;
-	var?: string;
-	val?: Value | Variable;
-};
-
-export type CallInfo = {
-	name: string;
-	pos: Ast.Pos | undefined;
-};
-
-export interface Evaluator<N extends Ast.Node> {
-	evalAsync(
-		context: AsyncEvaluatorContext,
-		node: N,
-		scope: Scope,
-		callStack: readonly CallInfo[]
-	): Promise<Value | Control>;
-
-	evalSync(
-		context: SyncEvaluatorContext,
-		node: N,
-		scope: Scope,
-		callStack: readonly CallInfo[]
-	): Value | Control;
-}
+import type { CallInfo, LogObject } from './types.js';
 
 interface EvaluatorContextBase {
 	log(type: string, params: LogObject): void;
