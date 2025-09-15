@@ -1,4 +1,5 @@
 import { NULL } from '../value.js';
+import { autobind } from '../../utils/mini-autobind.js';
 import type { Ast } from '../../index.js';
 import type { Control } from '../control.js';
 import type { Value } from '../value.js';
@@ -7,6 +8,7 @@ import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js'
 import type { CallInfo, Evaluator } from '../types.js';
 
 export class LoopEvaluator implements Evaluator<Ast.Loop> {
+	@autobind
 	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Loop, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
 		// eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition
 		while (true) {
@@ -27,6 +29,7 @@ export class LoopEvaluator implements Evaluator<Ast.Loop> {
 		return NULL;
 	}
 
+	@autobind
 	evalSync(context: SyncEvaluatorContext, node: Ast.Loop, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
 		// eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition
 		while (true) {

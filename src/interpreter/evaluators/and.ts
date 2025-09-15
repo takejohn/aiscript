@@ -1,5 +1,6 @@
 import { isControl, type Control } from '../control.js';
 import { assertBoolean } from '../util.js';
+import { autobind } from '../../utils/mini-autobind.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
@@ -7,6 +8,7 @@ import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js'
 import type { CallInfo, Evaluator } from '../types.js';
 
 export class AndEvaluator implements Evaluator<Ast.And> {
+	@autobind
 	async evalAsync(context: AsyncEvaluatorContext, node: Ast.And, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
 		const leftValue = await context.eval(node.left, scope, callStack);
 		if (isControl(leftValue)) {
@@ -26,6 +28,7 @@ export class AndEvaluator implements Evaluator<Ast.And> {
 		}
 	}
 
+	@autobind
 	evalSync(context: SyncEvaluatorContext, node: Ast.And, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
 		const leftValue = context.eval(node.left, scope, callStack);
 		if (isControl(leftValue)) {

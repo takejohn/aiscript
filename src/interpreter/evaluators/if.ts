@@ -1,6 +1,7 @@
 import { NULL } from '../value.js';
 import { isControl, unWrapLabeledBreak, type Control } from '../control.js';
 import { assertBoolean } from '../util.js';
+import { autobind } from '../../utils/mini-autobind.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
@@ -8,6 +9,7 @@ import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js'
 import type { CallInfo, Evaluator } from '../types.js';
 
 export class IfEvaluator implements Evaluator<Ast.If> {
+	@autobind
 	async evalAsync(context: AsyncEvaluatorContext, node: Ast.If, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
 		const cond = await context.eval(node.cond, scope, callStack);
 		if (isControl(cond)) {
@@ -33,6 +35,7 @@ export class IfEvaluator implements Evaluator<Ast.If> {
 		return NULL;
 	}
 
+	@autobind
 	evalSync(context: SyncEvaluatorContext, node: Ast.If, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
 		const cond = context.eval(node.cond, scope, callStack);
 		if (isControl(cond)) {

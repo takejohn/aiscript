@@ -1,6 +1,7 @@
 import { NULL, NUM } from '../value.js';
 import { isControl, type Control } from '../control.js';
 import { assertNumber } from '../util.js';
+import { autobind } from '../../utils/mini-autobind.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
@@ -8,6 +9,7 @@ import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js'
 import type { CallInfo, Evaluator } from '../types.js';
 
 export class ForEvaluator implements Evaluator<Ast.For> {
+	@autobind
 	async evalAsync(context: AsyncEvaluatorContext, node: Ast.For, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
 		if (node.times) {
 			const times = await context.eval(node.times, scope, callStack);
@@ -65,6 +67,7 @@ export class ForEvaluator implements Evaluator<Ast.For> {
 		return NULL;
 	}
 
+	@autobind
 	evalSync(context: SyncEvaluatorContext, node: Ast.For, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
 		if (node.times) {
 			const times = context.eval(node.times, scope, callStack);

@@ -1,5 +1,6 @@
 import { isControl, type Control } from '../control.js';
 import { assertFunction } from '../util.js';
+import { autobind } from '../../utils/mini-autobind.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
@@ -23,6 +24,7 @@ type BinaryOperationNode =
 export class BinaryOperationEvaluator<N extends BinaryOperationNode> implements Evaluator<N> {
 	constructor(private functionName: string) {}
 
+	@autobind
 	async evalAsync(context: AsyncEvaluatorContext, node: BinaryOperationNode, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
 		const callee = scope.get(this.functionName);
 		assertFunction(callee);
@@ -37,6 +39,7 @@ export class BinaryOperationEvaluator<N extends BinaryOperationNode> implements 
 		return context.fn(callee, [left, right], callStack);
 	}
 
+	@autobind
 	evalSync(context: SyncEvaluatorContext, node: BinaryOperationNode, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
 		const callee = scope.get(this.functionName);
 		assertFunction(callee);
