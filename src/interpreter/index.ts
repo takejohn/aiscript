@@ -8,11 +8,10 @@ import * as Ast from '../node.js';
 import { nodeToJs } from '../utils/node-to-js.js';
 import { Scope } from './scope.js';
 import { std } from './lib/std.js';
-import { unWrapRet, assertValue, isControl, type Control } from './control.js';
-import { assertNumber, assertString, assertObject, isObject, isArray, expectAny, reprValue, isFunction } from './util.js';
+import { unWrapRet, assertValue, type Control } from './control.js';
+import { assertString, expectAny, isFunction } from './util.js';
 import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
-import { Reference } from './reference.js';
 import { evaluateAsync, evaluateSync } from './evaluate.js';
 import { define } from './define.js';
 import { LifecycleManager } from './lifecycle.js';
@@ -33,7 +32,6 @@ export class Interpreter {
 		eval: (node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> => this._eval(node, scope, callStack),
 		evalClause: (node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> => this._evalClause(node, scope, callStack),
 		fn: (fn: VFn, args: Value[], callStack: readonly CallInfo[], pos?: Ast.Pos): Promise<Value> => this._fn(fn, args, callStack, pos),
-		getReference: (dest: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Reference | Control> => this.getReference(dest, scope, callStack),
 		run: (program: Ast.Node[], scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> => this._run(program, scope, callStack),
 		log: (type: string, params: LogObject): void => this.log(type, params),
 	};
@@ -42,7 +40,6 @@ export class Interpreter {
 		eval: (node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Value | Control => this._evalSync(node, scope, callStack),
 		evalClause: (node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Value | Control => this._evalClauseSync(node, scope, callStack),
 		fn: (fn: VFn, args: Value[], callStack: readonly CallInfo[], pos?: Ast.Pos): Value => this._fnSync(fn, args, callStack, pos),
-		getReference: (dest: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Reference | Control => this.getReferenceSync(dest, scope, callStack),
 		run: (program: Ast.Node[], scope: Scope, callStack: readonly CallInfo[]): Value | Control => this._runSync(program, scope, callStack),
 		log: (type: string, params: LogObject): void => this.log(type, params),
 	};
@@ -545,129 +542,5 @@ export class Interpreter {
 	@autobind
 	public unpause(): void {
 		this.lifecycleManager.unpause();
-	}
-
-	@autobind
-	private async getReference(dest: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Reference | Control> {
-		switch (dest.type) {
-			case 'identifier': {
-				return Reference.variable(dest.name, scope);
-			}
-			case 'index': {
-				const assignee = await this._eval(dest.target, scope, callStack);
-				if (isControl(assignee)) {
-					return assignee;
-				}
-				const i = await this._eval(dest.index, scope, callStack);
-				if (isControl(i)) {
-					return i;
-				}
-				if (isArray(assignee)) {
-					assertNumber(i);
-					return Reference.index(assignee, i.value);
-				} else if (isObject(assignee)) {
-					assertString(i);
-					return Reference.prop(assignee, i.value);
-				} else {
-					throw new AiScriptRuntimeError(`Cannot read prop (${reprValue(i)}) of ${assignee.type}.`);
-				}
-			}
-			case 'prop': {
-				const assignee = await this._eval(dest.target, scope, callStack);
-				if (isControl(assignee)) {
-					return assignee;
-				}
-				assertObject(assignee);
-
-				return Reference.prop(assignee, dest.name);
-			}
-			case 'arr': {
-				const items: Reference[] = [];
-				for (const item of dest.value) {
-					const ref = await this.getReference(item, scope, callStack);
-					if (isControl(ref)) {
-						return ref;
-					}
-					items.push(ref);
-				}
-				return Reference.arr(items);
-			}
-			case 'obj': {
-				const entries = new Map<string, Reference>();
-				for (const [key, item] of dest.value.entries()) {
-					const ref = await this.getReference(item, scope, callStack);
-					if (isControl(ref)) {
-						return ref;
-					}
-					entries.set(key, ref);
-				}
-				return Reference.obj(entries);
-			}
-			default: {
-				throw new AiScriptRuntimeError('The left-hand side of an assignment expression must be a variable or a property/index access.');
-			}
-		}
-	}
-
-	@autobind
-	private getReferenceSync(dest: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Reference | Control {
-		switch (dest.type) {
-			case 'identifier': {
-				return Reference.variable(dest.name, scope);
-			}
-			case 'index': {
-				const assignee = this._evalSync(dest.target, scope, callStack);
-				if (isControl(assignee)) {
-					return assignee;
-				}
-				const i = this._evalSync(dest.index, scope, callStack);
-				if (isControl(i)) {
-					return i;
-				}
-				if (isArray(assignee)) {
-					assertNumber(i);
-					return Reference.index(assignee, i.value);
-				} else if (isObject(assignee)) {
-					assertString(i);
-					return Reference.prop(assignee, i.value);
-				} else {
-					throw new AiScriptRuntimeError(`Cannot read prop (${reprValue(i)}) of ${assignee.type}.`);
-				}
-			}
-			case 'prop': {
-				const assignee = this._evalSync(dest.target, scope, callStack);
-				if (isControl(assignee)) {
-					return assignee;
-				}
-				assertObject(assignee);
-
-				return Reference.prop(assignee, dest.name);
-			}
-			case 'arr': {
-				const items: Reference[] = [];
-				for (const item of dest.value) {
-					const ref = this.getReferenceSync(item, scope, callStack);
-					if (isControl(ref)) {
-						return ref;
-					}
-					items.push(ref);
-				}
-				return Reference.arr(items);
-			}
-			case 'obj': {
-				const entries = new Map<string, Reference>();
-				for (const [key, item] of dest.value.entries()) {
-					const ref = this.getReferenceSync(item, scope, callStack);
-					if (isControl(ref)) {
-						return ref;
-					}
-					entries.set(key, ref);
-				}
-				return Reference.obj(entries);
-			}
-			default: {
-				throw new AiScriptRuntimeError('The left-hand side of an assignment expression must be a variable or a property/index access.');
-			}
-		}
 	}
 }

@@ -1,6 +1,7 @@
 import { NULL, NUM } from '../value.js';
 import { isControl, type Control } from '../control.js';
 import { assertNumber } from '../util.js';
+import { evaluateReferenceAsync, evaluateReferenceSync } from '../evaluate-reference.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
@@ -9,7 +10,7 @@ import type { CallInfo, Evaluator } from '../types.js';
 
 export class SubAssignEvaluator implements Evaluator<Ast.SubAssign> {
 	async evalAsync(context: AsyncEvaluatorContext, node: Ast.SubAssign, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const target = await context.getReference(node.dest, scope, callStack);
+		const target = await evaluateReferenceAsync(context, node.dest, scope, callStack);
 		if (isControl(target)) {
 			return target;
 		}
@@ -26,7 +27,7 @@ export class SubAssignEvaluator implements Evaluator<Ast.SubAssign> {
 	}
 
 	evalSync(context: SyncEvaluatorContext, node: Ast.SubAssign, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const target = context.getReference(node.dest, scope, callStack);
+		const target = evaluateReferenceSync(context, node.dest, scope, callStack);
 		if (isControl(target)) {
 			return target;
 		}
