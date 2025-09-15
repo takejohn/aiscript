@@ -15,6 +15,7 @@ import { Variable } from './variable.js';
 import { Reference } from './reference.js';
 import { evaluateAsync, evaluateSync } from './evaluate.js';
 import { define } from './define.js';
+import { LifecycleManager } from './lifecycle.js';
 import type { CallInfo, LogObject } from './types.js';
 import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { JsValue } from './util.js';
@@ -22,12 +23,8 @@ import type { Value, VFn } from './value.js';
 
 export class Interpreter {
 	public stepCount = 0;
-	private stop = false;
-	private pausing: { promise: Promise<void>, resolve: () => void } | null = null;
 	public scope: Scope;
-	private abortHandlers: (() => void)[] = [];
-	private pauseHandlers: (() => void)[] = [];
-	private unpauseHandlers: (() => void)[] = [];
+	private lifecycleManager = new LifecycleManager();
 	private vars: Record<string, Variable> = {};
 	private irqRate: number;
 	private irqSleep: () => Promise<void>;
@@ -203,7 +200,7 @@ export class Interpreter {
 		if (!this.opts.err) throw e;
 		if (this.opts.abortOnError) {
 			// when abortOnError is true, error handler should be called only once
-			if (this.stop) return;
+			if (this.lifecycleManager.stop) return;
 			this.abort();
 		}
 		if (e instanceof AiScriptError) {
@@ -345,12 +342,7 @@ export class Interpreter {
 			const result = fn.native(args, {
 				call: (fn, args) => this._fn(fn, args, [...callStack, info]),
 				topCall: this.execFn,
-				registerAbortHandler: this.registerAbortHandler,
-				registerPauseHandler: this.registerPauseHandler,
-				registerUnpauseHandler: this.registerUnpauseHandler,
-				unregisterAbortHandler: this.unregisterAbortHandler,
-				unregisterPauseHandler: this.unregisterPauseHandler,
-				unregisterUnpauseHandler: this.unregisterUnpauseHandler,
+				...this.lifecycleManager.registry,
 			});
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			return result ?? NULL;
@@ -374,21 +366,11 @@ export class Interpreter {
 			const result = fn.nativeSync ? fn.nativeSync(args, {
 				call: (fn, args) => this._fnSync(fn, args, [...callStack, info]),
 				topCall: this.execFnSync,
-				registerAbortHandler: this.registerAbortHandler,
-				registerPauseHandler: this.registerPauseHandler,
-				registerUnpauseHandler: this.registerUnpauseHandler,
-				unregisterAbortHandler: this.unregisterAbortHandler,
-				unregisterPauseHandler: this.unregisterPauseHandler,
-				unregisterUnpauseHandler: this.unregisterUnpauseHandler,
+				...this.lifecycleManager.registry,
 			}) : fn.native(args, {
 				call: (fn, args) => this._fn(fn, args, [...callStack, info]),
 				topCall: this.execFn,
-				registerAbortHandler: this.registerAbortHandler,
-				registerPauseHandler: this.registerPauseHandler,
-				registerUnpauseHandler: this.registerUnpauseHandler,
-				unregisterAbortHandler: this.unregisterAbortHandler,
-				unregisterPauseHandler: this.unregisterPauseHandler,
-				unregisterUnpauseHandler: this.unregisterUnpauseHandler,
+				...this.lifecycleManager.registry,
 			});
 			if (result instanceof Promise) {
 				throw new AiScriptHostsideError('Native function must not return a Promise in sync mode.');
@@ -446,8 +428,8 @@ export class Interpreter {
 
 	@autobind
 	private async __eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		if (this.stop) return NULL;
-		if (this.pausing) await this.pausing.promise;
+		if (this.lifecycleManager.stop) return NULL;
+		if (this.lifecycleManager.pausing) await this.lifecycleManager.pausing.promise;
 		// irqRateが小数の場合は不等間隔になる
 		if (this.irqRate !== 0 && this.stepCount % this.irqRate >= this.irqRate - 1) {
 			await this.irqSleep();
@@ -462,7 +444,7 @@ export class Interpreter {
 
 	@autobind
 	private __evalSync(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		if (this.stop) return NULL;
+		if (this.lifecycleManager.stop) return NULL;
 
 		this.stepCount++;
 		if (this.opts.maxStep && this.stepCount > this.opts.maxStep) {
@@ -526,60 +508,43 @@ export class Interpreter {
 
 	@autobind
 	public registerAbortHandler(handler: () => void): void {
-		this.abortHandlers.push(handler);
+		this.lifecycleManager.registerAbortHandler(handler);
 	}
 	@autobind
 	public registerPauseHandler(handler: () => void): void {
-		this.pauseHandlers.push(handler);
+		this.lifecycleManager.registerPauseHandler(handler);
 	}
 	@autobind
 	public registerUnpauseHandler(handler: () => void): void {
-		this.unpauseHandlers.push(handler);
+		this.lifecycleManager.registerUnpauseHandler(handler);
 	}
 
 	@autobind
 	public unregisterAbortHandler(handler: () => void): void {
-		this.abortHandlers = this.abortHandlers.filter(h => h !== handler);
+		this.lifecycleManager.registerAbortHandler(handler);
 	}
 	@autobind
 	public unregisterPauseHandler(handler: () => void): void {
-		this.pauseHandlers = this.pauseHandlers.filter(h => h !== handler);
+		this.lifecycleManager.unregisterPauseHandler(handler);
 	}
 	@autobind
 	public unregisterUnpauseHandler(handler: () => void): void {
-		this.unpauseHandlers = this.unpauseHandlers.filter(h => h !== handler);
+		this.lifecycleManager.unregisterPauseHandler(handler);
 	}
 
 	@autobind
 	public abort(): void {
-		this.stop = true;
-		for (const handler of this.abortHandlers) {
-			handler();
-		}
-		this.abortHandlers = [];
+		this.lifecycleManager.abort();
 	}
 
 	@autobind
 	public pause(): void {
-		if (this.pausing) return;
-		let resolve: () => void;
-		const promise = new Promise<void>(r => { resolve = () => r(); });
-		this.pausing = { promise, resolve: resolve! };
-		for (const handler of this.pauseHandlers) {
-			handler();
-		}
-		this.pauseHandlers = [];
+		this.lifecycleManager.pause();
 	}
 
 	@autobind
 	public unpause(): void {
-		if (!this.pausing) return;
-		this.pausing.resolve();
-		this.pausing = null;
-		for (const handler of this.unpauseHandlers) {
-			handler();
-		}
-		this.unpauseHandlers = [];
+		this.lifecycleManager.unpause();
 	}
 
 	@autobind
