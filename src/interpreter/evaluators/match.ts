@@ -1,7 +1,7 @@
 import { NULL } from '../value.js';
 import { isControl, unWrapLabeledBreak, type Control } from '../control.js';
 import { eq } from '../util.js';
-import { evalClauseAsync, evalClauseSync } from './evaluator-utils.js';
+import { evalClauseAsync, evalClauseSync } from '../evaluator-utils.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';

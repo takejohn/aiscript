@@ -1,9 +1,9 @@
-import { Ast } from '../../index.js';
-import type { Scope } from '../../index.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { Control } from '../control.js';
-import type { CallInfo } from '../types.js';
-import type { Value } from '../value.js';
+import { Ast } from '../index.js';
+import type { Scope } from '../index.js';
+import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
+import type { Control } from './control.js';
+import type { CallInfo } from './types.js';
+import type { Value } from './value.js';
 
 export function evalClauseAsync(
 	context: AsyncEvaluatorContext,

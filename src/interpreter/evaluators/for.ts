@@ -1,7 +1,7 @@
 import { NULL, NUM } from '../value.js';
 import { isControl, type Control } from '../control.js';
 import { assertNumber } from '../util.js';
-import { evalClauseAsync, evalClauseSync } from './evaluator-utils.js';
+import { evalClauseAsync, evalClauseSync } from '../evaluator-utils.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
