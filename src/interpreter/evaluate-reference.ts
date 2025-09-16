@@ -158,10 +158,10 @@ const referenceEvaluatorMap: { [T in Ast.Node['type']]?: ReferenceEvaluator<Ast.
 };
 
 function selectReferenceEvaluator<T extends Ast.Node['type']>(type: T): ReferenceEvaluator<Ast.Node & { type: T }> {
-	const referenceEvaluator = referenceEvaluatorMap[type];
-	if (referenceEvaluator === undefined) {
+	if (!Object.hasOwn(referenceEvaluatorMap, type)) {
 		throw new AiScriptRuntimeError('The left-hand side of an assignment expression must be a variable or a property/index access.');
 	}
+	const referenceEvaluator = referenceEvaluatorMap[type]!;
 	return referenceEvaluator;
 }
 

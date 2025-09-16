@@ -88,13 +88,21 @@ const evaluatorMap: { [T in Ast.Node['type']]: Evaluator<Ast.Node & { type: T }>
 	'attr': new NeverEvaluator(),
 };
 
+function selectEvaluator<T extends Ast.Node['type']>(type: T): Evaluator<Ast.Node & { type: T }> {
+	if (!Object.hasOwn(evaluatorMap, type)) {
+		throw new Error('invalid node type');
+	}
+	const evaluator = evaluatorMap[type];
+	return evaluator;
+}
+
 export async function evaluateAsync<T extends Ast.Node['type']>(
 	context: AsyncEvaluatorContext,
 	node: Ast.Node & { type: T },
 	scope: Scope,
 	callStack: readonly CallInfo[]
 ): Promise<Value | Control> {
-	const evaluator = evaluatorMap[node.type];
+	const evaluator = selectEvaluator(node.type);
 	return await evaluator.evalAsync(context, node, scope, callStack);
 }
 
@@ -104,6 +112,6 @@ export function evaluateSync<T extends Ast.Node['type']>(
 	scope: Scope,
 	callStack: readonly CallInfo[]
 ): Value | Control {
-	const evaluator = evaluatorMap[node.type];
+	const evaluator = selectEvaluator(node.type);
 	return evaluator.evalSync(context, node, scope, callStack);
 }
