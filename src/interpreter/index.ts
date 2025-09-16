@@ -4,7 +4,6 @@
 
 import { autobind } from '../utils/mini-autobind.js';
 import { AiScriptError, NonAiScriptError, AiScriptNamespaceError, AiScriptRuntimeError, AiScriptHostsideError } from '../error.js';
-import * as Ast from '../node.js';
 import { nodeToJs } from '../utils/node-to-js.js';
 import { Scope } from './scope.js';
 import { std } from './lib/std.js';
@@ -15,6 +14,7 @@ import { Variable } from './variable.js';
 import { evaluateAsync, evaluateSync } from './evaluate.js';
 import { define } from './define.js';
 import { LifecycleManager } from './lifecycle/manager.js';
+import type * as Ast from '../node.js';
 import type { CallInfo, LogObject } from './types.js';
 import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { JsValue } from './util.js';
@@ -29,7 +29,6 @@ export class Interpreter {
 
 	private asyncEvaluatorContext: AsyncEvaluatorContext = {
 		eval: (node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> => this._eval(node, scope, callStack),
-		evalClause: (node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> => this._evalClause(node, scope, callStack),
 		fn: (fn: VFn, args: Value[], callStack: readonly CallInfo[], pos?: Ast.Pos): Promise<Value> => this._fn(fn, args, callStack, pos),
 		run: (program: Ast.Node[], scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> => this._run(program, scope, callStack),
 		log: (type: string, params: LogObject): void => this.log(type, params),
@@ -37,7 +36,6 @@ export class Interpreter {
 
 	private syncEvaluatorContext: SyncEvaluatorContext = {
 		eval: (node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Value | Control => this._evalSync(node, scope, callStack),
-		evalClause: (node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Value | Control => this._evalClauseSync(node, scope, callStack),
 		fn: (fn: VFn, args: Value[], callStack: readonly CallInfo[], pos?: Ast.Pos): Value => this._fnSync(fn, args, callStack, pos),
 		run: (program: Ast.Node[], scope: Scope, callStack: readonly CallInfo[]): Value | Control => this._runSync(program, scope, callStack),
 		log: (type: string, params: LogObject): void => this.log(type, params),
@@ -384,16 +382,6 @@ export class Interpreter {
 			const info: CallInfo = { name: fn.name ?? '<anonymous>', pos };
 			return unWrapRet(this._runSync(fn.statements!, fnScope, [...callStack, info]));
 		}
-	}
-
-	@autobind
-	private _evalClause(node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		return this._eval(node, Ast.isStatement(node) ? scope.createChildScope() : scope, callStack);
-	}
-
-	@autobind
-	private _evalClauseSync(node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		return this._evalSync(node, Ast.isStatement(node) ? scope.createChildScope() : scope, callStack);
 	}
 
 	@autobind

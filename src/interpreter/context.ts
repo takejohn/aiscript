@@ -10,8 +10,6 @@ interface EvaluatorContextBase {
 export interface AsyncEvaluatorContext extends EvaluatorContextBase {
 	eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control>;
 
-	evalClause(node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control>;
-
 	fn(fn: VFn, args: Value[], callStack: readonly CallInfo[], pos?: Ast.Pos): Promise<Value>;
 
 	run(program: Ast.Node[], scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control>;
@@ -19,8 +17,6 @@ export interface AsyncEvaluatorContext extends EvaluatorContextBase {
 
 export interface SyncEvaluatorContext extends EvaluatorContextBase {
 	eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Value | Control;
-
-	evalClause(node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Value | Control;
 
 	fn(fn: VFn, args: Value[], callStack: readonly CallInfo[], pos?: Ast.Pos): Value;
 

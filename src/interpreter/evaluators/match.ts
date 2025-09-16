@@ -2,6 +2,7 @@ import { NULL } from '../value.js';
 import { isControl, unWrapLabeledBreak, type Control } from '../control.js';
 import { eq } from '../util.js';
 import { autobind } from '../../utils/mini-autobind.js';
+import { evalClauseAsync, evalClauseSync } from './evaluator-utils.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
@@ -21,11 +22,11 @@ export class MatchEvaluator implements Evaluator<Ast.Match> {
 				return q;
 			}
 			if (eq(about, q)) {
-				return unWrapLabeledBreak(await context.evalClause(qa.a, scope, callStack), node.label);
+				return unWrapLabeledBreak(await evalClauseAsync(context, qa.a, scope, callStack), node.label);
 			}
 		}
 		if (node.default) {
-			return unWrapLabeledBreak(await context.evalClause(node.default, scope, callStack), node.label);
+			return unWrapLabeledBreak(await evalClauseAsync(context, node.default, scope, callStack), node.label);
 		}
 		return NULL;
 	}
@@ -42,11 +43,11 @@ export class MatchEvaluator implements Evaluator<Ast.Match> {
 				return q;
 			}
 			if (eq(about, q)) {
-				return unWrapLabeledBreak(context.eval(qa.a, scope, callStack), node.label);
+				return unWrapLabeledBreak(evalClauseSync(context, qa.a, scope, callStack), node.label);
 			}
 		}
 		if (node.default) {
-			return unWrapLabeledBreak(context.eval(node.default, scope, callStack), node.label);
+			return unWrapLabeledBreak(evalClauseSync(context, node.default, scope, callStack), node.label);
 		}
 		return NULL;
 	}

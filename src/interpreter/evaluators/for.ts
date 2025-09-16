@@ -2,6 +2,7 @@ import { NULL, NUM } from '../value.js';
 import { isControl, type Control } from '../control.js';
 import { assertNumber } from '../util.js';
 import { autobind } from '../../utils/mini-autobind.js';
+import { evalClauseAsync, evalClauseSync } from './evaluator-utils.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
@@ -18,7 +19,7 @@ export class ForEvaluator implements Evaluator<Ast.For> {
 			}
 			assertNumber(times);
 			for (let i = 0; i < times.value; i++) {
-				const v = await context.evalClause(node.for, scope, callStack);
+				const v = await evalClauseAsync(context, node.for, scope, callStack);
 				if (v.type === 'break') {
 					if (v.label != null && v.label !== node.label) {
 						return v;
@@ -76,7 +77,7 @@ export class ForEvaluator implements Evaluator<Ast.For> {
 			}
 			assertNumber(times);
 			for (let i = 0; i < times.value; i++) {
-				const v = context.evalClause(node.for, scope, callStack);
+				const v = evalClauseSync(context, node.for, scope, callStack);
 				if (v.type === 'break') {
 					if (v.label != null && v.label !== node.label) {
 						return v;

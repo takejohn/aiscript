@@ -7,6 +7,7 @@ import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
 import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
 import type { CallInfo, Evaluator } from '../types.js';
+import { evalClauseAsync, evalClauseSync } from './evaluator-utils.js';
 
 export class IfEvaluator implements Evaluator<Ast.If> {
 	@autobind
@@ -17,7 +18,7 @@ export class IfEvaluator implements Evaluator<Ast.If> {
 		}
 		assertBoolean(cond);
 		if (cond.value) {
-			return unWrapLabeledBreak(await context.evalClause(node.then, scope, callStack), node.label);
+			return unWrapLabeledBreak(await evalClauseAsync(context, node.then, scope, callStack), node.label);
 		}
 		for (const elseif of node.elseif) {
 			const cond = await context.eval(elseif.cond, scope, callStack);
@@ -26,11 +27,11 @@ export class IfEvaluator implements Evaluator<Ast.If> {
 			}
 			assertBoolean(cond);
 			if (cond.value) {
-				return unWrapLabeledBreak(await context.evalClause(elseif.then, scope, callStack), node.label);
+				return unWrapLabeledBreak(await evalClauseAsync(context, elseif.then, scope, callStack), node.label);
 			}
 		}
 		if (node.else) {
-			return unWrapLabeledBreak(await context.evalClause(node.else, scope, callStack), node.label);
+			return unWrapLabeledBreak(await evalClauseAsync(context, node.else, scope, callStack), node.label);
 		}
 		return NULL;
 	}
@@ -43,7 +44,7 @@ export class IfEvaluator implements Evaluator<Ast.If> {
 		}
 		assertBoolean(cond);
 		if (cond.value) {
-			return unWrapLabeledBreak(context.evalClause(node.then, scope, callStack), node.label);
+			return unWrapLabeledBreak(evalClauseSync(context, node.then, scope, callStack), node.label);
 		}
 		for (const elseif of node.elseif) {
 			const cond = context.eval(elseif.cond, scope, callStack);
@@ -52,11 +53,11 @@ export class IfEvaluator implements Evaluator<Ast.If> {
 			}
 			assertBoolean(cond);
 			if (cond.value) {
-				return unWrapLabeledBreak(context.evalClause(elseif.then, scope, callStack), node.label);
+				return unWrapLabeledBreak(evalClauseSync(context, elseif.then, scope, callStack), node.label);
 			}
 		}
 		if (node.else) {
-			return unWrapLabeledBreak(context.evalClause(node.else, scope, callStack), node.label);
+			return unWrapLabeledBreak(evalClauseSync(context, node.else, scope, callStack), node.label);
 		}
 		return NULL;
 	}
