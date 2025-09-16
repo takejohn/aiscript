@@ -1,15 +1,13 @@
 import { STR } from '../value.js';
 import { isControl, type Control } from '../control.js';
 import { reprValue } from '../util.js';
-import { autobind } from '../../utils/mini-autobind.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
 import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
 import type { CallInfo, Evaluator } from '../types.js';
 
-export class TmplEvaluator implements Evaluator<Ast.Tmpl> {
-	@autobind
+export const TmplEvaluator: Evaluator<Ast.Tmpl> = {
 	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Tmpl, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
 		let str = '';
 		for (const x of node.tmpl) {
@@ -24,9 +22,8 @@ export class TmplEvaluator implements Evaluator<Ast.Tmpl> {
 			}
 		}
 		return STR(str);
-	}
+	},
 
-	@autobind
 	evalSync(context: SyncEvaluatorContext, node: Ast.Tmpl, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
 		let str = '';
 		for (const x of node.tmpl) {
@@ -41,5 +38,5 @@ export class TmplEvaluator implements Evaluator<Ast.Tmpl> {
 			}
 		}
 		return STR(str);
-	}
+	},
 };
