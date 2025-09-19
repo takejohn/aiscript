@@ -1,69 +1,62 @@
-import { isControl, type Control } from '../control.js';
+import { isControl } from '../control.js';
 import { assertFunction } from '../util.js';
-import { autobind } from '../../utils/mini-autobind.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { Evaluator } from '../types.js';
 import type { Ast } from '../../index.js';
-import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
+import type { EvaluationStepResult } from '../evaluator.js';
 
-type BinaryOperationNode =
-	Ast.Pow |
-	Ast.Mul |
-	Ast.Div |
-	Ast.Rem |
-	Ast.Add |
-	Ast.Sub |
-	Ast.Lt |
-	Ast.Lteq |
-	Ast.Gt |
-	Ast.Gteq |
-	Ast.Eq |
-	Ast.Neq;
-
-export class BinaryOperationEvaluator<N extends BinaryOperationNode> implements Evaluator<N> {
-	public static readonly POW = new BinaryOperationEvaluator<Ast.Pow>('Core:pow');
-	public static readonly MUL = new BinaryOperationEvaluator<Ast.Mul>('Core:mul');
-	public static readonly DIV = new BinaryOperationEvaluator<Ast.Div>('Core:div');
-	public static readonly REM = new BinaryOperationEvaluator<Ast.Rem>('Core:mod');
-	public static readonly ADD = new BinaryOperationEvaluator<Ast.Add>('Core:add');
-	public static readonly SUB = new BinaryOperationEvaluator<Ast.Sub>('Core:sub');
-	public static readonly LT = new BinaryOperationEvaluator<Ast.Lt>('Core:lt');
-	public static readonly LTEQ = new BinaryOperationEvaluator<Ast.Lteq>('Core:lteq');
-	public static readonly GT = new BinaryOperationEvaluator<Ast.Gt>('Core:gt');
-	public static readonly GTEQ = new BinaryOperationEvaluator<Ast.Gteq>('Core:gteq');
-	public static readonly EQ = new BinaryOperationEvaluator<Ast.Eq>('Core:eq');
-	public static readonly NEQ = new BinaryOperationEvaluator<Ast.Neq>('Core:neq');
-
-	private constructor(private functionName: string) {}
-
-	@autobind
-	async evalAsync(context: AsyncEvaluatorContext, node: BinaryOperationNode, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const callee = scope.get(this.functionName);
-		assertFunction(callee);
-		const left = await context.eval(node.left, scope, callStack);
-		if (isControl(left)) {
-			return left;
-		}
-		const right = await context.eval(node.right, scope, callStack);
-		if (isControl(right)) {
-			return right;
-		}
-		return context.fn(callee, [left, right], callStack);
-	}
-
-	@autobind
-	evalSync(context: SyncEvaluatorContext, node: BinaryOperationNode, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const callee = scope.get(this.functionName);
-		assertFunction(callee);
-		const left = context.eval(node.left, scope, callStack);
-		if (isControl(left)) {
-			return left;
-		}
-		const right = context.eval(node.right, scope, callStack);
-		if (isControl(right)) {
-			return right;
-		}
-		return context.fn(callee, [left, right], callStack);
-	}
+type BinaryOperationNodes = {
+	'Core:pow': Ast.Pow,
+	'Core:mul': Ast.Mul,
+	'Core:div': Ast.Div,
+	'Core:mod': Ast.Rem,
+	'Core:add': Ast.Add,
+	'Core:sub': Ast.Sub,
+	'Core:lt': Ast.Lt,
+	'Core:lteq': Ast.Lteq,
+	'Core:gt': Ast.Gt,
+	'Core:gteq': Ast.Gteq,
+	'Core:eq': Ast.Eq,
+	'Core:neq': Ast.Neq,
 };
+
+function createEvaluator<F extends keyof BinaryOperationNodes>(fnName: F): Evaluator<BinaryOperationNodes[F]> {
+	const func = function(node: BinaryOperationNodes[F], scope: Scope): EvaluationStepResult {
+		const callee = scope.get(fnName);
+		assertFunction(callee);
+
+		return instructions.eval(node.left, scope, (left) => {
+			if (isControl(left)) {
+				return instructions.end(left);
+			}
+
+			return instructions.eval(node.right, scope, (right) => {
+				if (isControl(right)) {
+					return instructions.end(right);
+				}
+
+				return instructions.fn(callee, [left, right], (value) => {
+					return instructions.end(value);
+				});
+			});
+		});
+	};
+
+	return evaluationStepsToEvaluator(func);
+}
+
+export const BinaryOperationEvaluator = Object.freeze({
+	POW: createEvaluator('Core:pow'),
+	MUL: createEvaluator('Core:mul'),
+	DIV: createEvaluator('Core:div'),
+	REM: createEvaluator('Core:mod'),
+	ADD: createEvaluator('Core:add'),
+	SUB: createEvaluator('Core:sub'),
+	LT: createEvaluator('Core:lt'),
+	LTEQ: createEvaluator('Core:lteq'),
+	GT: createEvaluator('Core:gt'),
+	GTEQ: createEvaluator('Core:gteq'),
+	EQ: createEvaluator('Core:eq'),
+	NEQ: createEvaluator('Core:neq'),
+});

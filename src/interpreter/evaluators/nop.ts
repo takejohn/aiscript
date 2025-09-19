@@ -1,15 +1,9 @@
 import { NULL } from '../value.js';
-import type { Ast } from '../../index.js';
-import type { Control } from '../control.js';
-import type { Value } from '../value.js';
-import type { Evaluator } from '../types.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { EvaluationStepResult } from '../evaluator.js';
 
-export const NopEvaluator: Evaluator<Ast.Node> = {
-	async evalAsync(): Promise<Value | Control> {
-		return NULL;
-	},
+function evalNop(): EvaluationStepResult {
+	return instructions.end(NULL);
+}
 
-	evalSync(): Value | Control {
-		return NULL;
-	},
-};
+export const NopEvaluator = evaluationStepsToEvaluator(evalNop);

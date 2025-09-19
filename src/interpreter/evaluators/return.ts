@@ -1,26 +1,17 @@
-import { isControl, RETURN, type Control } from '../control.js';
+import { isControl, RETURN } from '../control.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { EvaluationStepResult, Logger } from '../evaluator.js';
 import type { Ast } from '../../index.js';
-import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
 
-export const ReturnEvaluator: Evaluator<Ast.Return> = {
-	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Return, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const val = await context.eval(node.expr, scope, callStack);
+function evalReturn(node: Ast.Return, scope: Scope, logger: Logger): EvaluationStepResult {
+	return instructions.eval(node.expr, scope, (val) => {
 		if (isControl(val)) {
-			return val;
+			return instructions.end(val);
 		}
-		context.log('block:return', { scope: scope.name, val: val });
-		return RETURN(val);
-	},
+		logger.log('block:return', { scope: scope.name, val: val });
+		return instructions.end(RETURN(val));
+	});
+}
 
-	evalSync(context: SyncEvaluatorContext, node: Ast.Return, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const val = context.eval(node.expr, scope, callStack);
-		if (isControl(val)) {
-			return val;
-		}
-		context.log('block:return', { scope: scope.name, val: val });
-		return RETURN(val);
-	},
-};
+export const ReturnEvaluator = evaluationStepsToEvaluator(evalReturn);

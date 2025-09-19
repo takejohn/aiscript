@@ -1,33 +1,14 @@
 import { ARR } from '../value.js';
-import { isControl, type Control } from '../control.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import { evalList } from '../evaluator-utils.js';
+import type { EvaluationStepResult } from '../evaluator.js';
 import type { Ast } from '../../index.js';
-import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
 
-export const ArrEvaluator: Evaluator<Ast.Arr> = {
-	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Arr, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const value = [];
-		for (const item of node.value) {
-			const valueItem = await context.eval(item, scope, callStack);
-			if (isControl(valueItem)) {
-				return valueItem;
-			}
-			value.push(valueItem);
-		}
-		return ARR(value);
-	},
+function evalArr(node: Ast.Arr, scope: Scope): EvaluationStepResult {
+	return evalList(node.value, scope, (value) => {
+		return instructions.end(ARR(value));
+	});
+}
 
-	evalSync(context: SyncEvaluatorContext, node: Ast.Arr, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const value = [];
-		for (const item of node.value) {
-			const valueItem = context.eval(item, scope, callStack);
-			if (isControl(valueItem)) {
-				return valueItem;
-			}
-			value.push(valueItem);
-		}
-		return ARR(value);
-	},
-};
+export const ArrEvaluator = evaluationStepsToEvaluator(evalArr);

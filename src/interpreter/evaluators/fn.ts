@@ -1,59 +1,47 @@
 import { FN, NULL } from '../value.js';
-import { isControl, type Control } from '../control.js';
+import { isControl } from '../control.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { EvaluationStepResult } from '../evaluator.js';
 import type { Ast } from '../../index.js';
 import type { Value, VUserFn } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
 
-export const FnEvaluator: Evaluator<Ast.Fn> = {
-	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Fn, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const params = await Promise.all(node.params.map(async (param) => {
-			return {
-				dest: param.dest,
-				default:
-					param.default ? await context.eval(param.default, scope, callStack) :
-					param.optional ? NULL :
-					undefined,
-				// type: (TODO)
-			};
-		}));
-		const control = params
-			.map((param) => param.default)
-			.filter((value) => value != null)
-			.find(isControl);
-		if (control != null) {
-			return control;
+function evalFn(node: Ast.Fn, scope: Scope): EvaluationStepResult {
+	const params: VUserFn['params'] = [];
+	const paramIterator = node.params.values();
+	const evalParams = (): EvaluationStepResult => {
+		const paramResult = paramIterator.next();
+		if (paramResult.done) {
+			return instructions.end(FN(
+				params,
+				node.children,
+				scope,
+			));
 		}
-		return FN(
-			params as VUserFn['params'],
-			node.children,
-			scope,
-		);
-	},
 
-	evalSync(context: SyncEvaluatorContext, node: Ast.Fn, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const params = node.params.map((param) => {
-			return {
+		const setParam = (defaultValue: Value | undefined): EvaluationStepResult => {
+			params.push({
 				dest: param.dest,
-				default:
-					param.default ? context.eval(param.default, scope, callStack) :
-					param.optional ? NULL :
-					undefined,
-				// type: (TODO)
-			};
-		});
-		const control = params
-			.map((param) => param.default)
-			.filter((value) => value != null)
-			.find(isControl);
-		if (control != null) {
-			return control;
+				default: defaultValue,
+			});
+			return evalParams();
+		};
+
+		const param = paramResult.value;
+		if (param.default != null) {
+			return instructions.eval(param.default, scope, (defaultValue) => {
+				if (isControl(defaultValue)) {
+					return instructions.end(defaultValue);
+				}
+				return setParam(defaultValue);
+			});
 		}
-		return FN(
-			params as VUserFn['params'],
-			node.children,
-			scope,
-		);
-	},
-};
+		if (param.optional) {
+			return setParam(NULL);
+		}
+		return setParam(undefined);
+	};
+	return evalParams();
+}
+
+export const FnEvaluator = evaluationStepsToEvaluator(evalFn);

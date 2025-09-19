@@ -1,40 +1,26 @@
 import { NULL } from '../value.js';
-import { isControl, type Control } from '../control.js';
-import { evaluateReferenceAsync, evaluateReferenceSync } from '../evaluate-reference.js';
+import { isControl } from '../control.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { EvaluationStepResult } from '../evaluator.js';
 import type { Ast } from '../../index.js';
-import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
 
-export const AssignEvaluator: Evaluator<Ast.Assign> = {
-	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Assign, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const target = await evaluateReferenceAsync(context, node.dest, scope, callStack);
+function evalAssign(node: Ast.Assign, scope: Scope): EvaluationStepResult {
+	return instructions.evaluateReference(node.dest, scope, (target) => {
 		if (isControl(target)) {
-			return target;
-		}
-		const v = await context.eval(node.expr, scope, callStack);
-		if (isControl(v)) {
-			return v;
+			return instructions.end(target);
 		}
 
-		target.set(v);
+		return instructions.eval(node.expr, scope, (v) => {
+			if (isControl(v)) {
+				return instructions.end(v);
+			}
 
-		return NULL;
-	},
+			target.set(v);
 
-	evalSync(context: SyncEvaluatorContext, node: Ast.Assign, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const target = evaluateReferenceSync(context, node.dest, scope, callStack);
-		if (isControl(target)) {
-			return target;
-		}
-		const v = context.eval(node.expr, scope, callStack);
-		if (isControl(v)) {
-			return v;
-		}
+			return instructions.end(NULL);
+		});
+	});
+}
 
-		target.set(v);
-
-		return NULL;
-	},
-};
+export const AssignEvaluator = evaluationStepsToEvaluator(evalAssign);

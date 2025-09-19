@@ -1,69 +1,57 @@
 import { NULL } from '../value.js';
-import { assertValue, isControl, type Control } from '../control.js';
+import { assertValue, isControl } from '../control.js';
 import { isFunction } from '../util.js';
 import { define } from '../define.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { EvaluationDoneResult, EvaluationStepResult } from '../evaluator.js';
 import type { Ast } from '../../index.js';
 import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
 
-export const DefinitionEvaluator: Evaluator<Ast.Definition> = {
-	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Definition, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const value = await context.eval(node.expr, scope, callStack);
+function evalDefinition(node: Ast.Definition, scope: Scope): EvaluationStepResult {
+	return instructions.eval(node.expr, scope, (value) => {
 		if (isControl(value)) {
-			return value;
+			return instructions.end(value);
 		}
-		if (node.attr.length > 0) {
-			const attrs: Value['attr'] = [];
-			for (const nAttr of node.attr) {
-				const value = await context.eval(nAttr.value, scope, callStack);
+
+		const defineValue = (): EvaluationDoneResult => {
+			if (
+				node.expr.type === 'fn'
+						&& node.dest.type === 'identifier'
+						&& isFunction(value)
+						&& !value.native
+			) {
+				value.name = node.dest.name;
+			}
+			define(scope, node.dest, value, node.mut);
+			return instructions.end(NULL);
+		};
+
+		const defineWithAttrs = (attrs: NonNullable<Value['attr']>, attrIterator: Iterator<Ast.Attribute>): EvaluationStepResult => {
+			const nAttrResult = attrIterator.next();
+			if (nAttrResult.done) {
+				value.attr = attrs;
+				return defineValue();
+			}
+			const nAttr = nAttrResult.value;
+			return instructions.eval(nAttr.value, scope, (value) => {
 				assertValue(value);
 				attrs.push({
 					name: nAttr.name,
 					value,
 				});
-			}
-			value.attr = attrs;
-		}
-		if (
-			node.expr.type === 'fn'
-					&& node.dest.type === 'identifier'
-					&& isFunction(value)
-					&& !value.native
-		) {
-			value.name = node.dest.name;
-		}
-		define(scope, node.dest, value, node.mut);
-		return NULL;
-	},
+				return defineWithAttrs(attrs, attrIterator);
+			});
+		};
 
-	evalSync(context: SyncEvaluatorContext, node: Ast.Definition, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const value = context.eval(node.expr, scope, callStack);
-		if (isControl(value)) {
-			return value;
-		}
 		if (node.attr.length > 0) {
-			const attrs: Value['attr'] = [];
-			for (const nAttr of node.attr) {
-				const value = context.eval(nAttr.value, scope, callStack);
-				assertValue(value);
-				attrs.push({
-					name: nAttr.name,
-					value,
-				});
-			}
-			value.attr = attrs;
+			const attrs: NonNullable<Value['attr']> = [];
+			const attrIterator = node.attr.values();
+			return defineWithAttrs(attrs, attrIterator);
 		}
-		if (
-			node.expr.type === 'fn'
-					&& node.dest.type === 'identifier'
-					&& isFunction(value)
-					&& !value.native
-		) {
-			value.name = node.dest.name;
-		}
-		define(scope, node.dest, value, node.mut);
-		return NULL;
-	},
-};
+
+		return defineValue();
+	});
+}
+
+export const DefinitionEvaluator = evaluationStepsToEvaluator(evalDefinition);

@@ -1,27 +1,18 @@
-import { isControl, type Control } from '../control.js';
+import { isControl } from '../control.js';
 import { assertNumber } from '../util.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { EvaluationStepResult } from '../evaluator.js';
 import type { Ast } from '../../index.js';
-import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
 
-export const PlusEvaluator: Evaluator<Ast.Plus> = {
-	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Plus, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const v = await context.eval(node.expr, scope, callStack);
+function evalPlus(node: Ast.Plus, scope: Scope): EvaluationStepResult {
+	return instructions.eval(node.expr, scope, (v) => {
 		if (isControl(v)) {
-			return v;
+			return instructions.end(v);
 		}
 		assertNumber(v);
-		return v;
-	},
+		return instructions.end(v);
+	});
+}
 
-	evalSync(context: SyncEvaluatorContext, node: Ast.Plus, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const v = context.eval(node.expr, scope, callStack);
-		if (isControl(v)) {
-			return v;
-		}
-		assertNumber(v);
-		return v;
-	},
-};
+export const PlusEvaluator = evaluationStepsToEvaluator(evalPlus);

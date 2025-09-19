@@ -1,63 +1,48 @@
 import { NULL } from '../value.js';
-import { isControl, type Control } from '../control.js';
+import { isControl } from '../control.js';
 import { assertArray } from '../util.js';
 import { define } from '../define.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { EvaluationStepResult } from '../evaluator.js';
 import type { Ast } from '../../index.js';
-import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
 
-export const EachEvaluator: Evaluator<Ast.Node> = {
-	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Each, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const items = await context.eval(node.items, scope, callStack);
+function evalEach(node: Ast.Each, scope: Scope): EvaluationStepResult {
+	return instructions.eval(node.items, scope, (items) => {
 		if (isControl(items)) {
-			return items;
+			return instructions.end(items);
 		}
 		assertArray(items);
-		for (const item of items.value) {
-			const eachScope = scope.createChildScope();
-			define(eachScope, node.var, item, false);
-			const v = await context.eval(node.for, eachScope, callStack);
-			if (v.type === 'break') {
-				if (v.label != null && v.label !== node.label) {
-					return v;
-				}
-				break;
-			} else if (v.type === 'continue') {
-				if (v.label != null && v.label !== node.label) {
-					return v;
-				}
-			} else if (v.type === 'return') {
-				return v;
-			}
-		}
-		return NULL;
-	},
 
-	evalSync(context: SyncEvaluatorContext, node: Ast.Each, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const items = context.eval(node.items, scope, callStack);
-		if (isControl(items)) {
-			return items;
-		}
-		assertArray(items);
-		for (const item of items.value) {
+		const itemsIterator = items.value.values();
+		const executeBody = (): EvaluationStepResult => {
+			const itemResult = itemsIterator.next();
+			if (itemResult.done) {
+				return instructions.end(NULL);
+			}
+
+			const item = itemResult.value;
 			const eachScope = scope.createChildScope();
 			define(eachScope, node.var, item, false);
-			const v = context.eval(node.for, eachScope, callStack);
-			if (v.type === 'break') {
-				if (v.label != null && v.label !== node.label) {
-					return v;
+			return instructions.eval(node.for, eachScope, (v) => {
+				if (v.type === 'break') {
+					if (v.label != null && v.label !== node.label) {
+						return instructions.end(v);
+					}
+					return instructions.end(NULL);
+				} else if (v.type === 'continue') {
+					if (v.label != null && v.label !== node.label) {
+						return instructions.end(v);
+					}
+				} else if (v.type === 'return') {
+					return instructions.end(v);
 				}
-				break;
-			} else if (v.type === 'continue') {
-				if (v.label != null && v.label !== node.label) {
-					return v;
-				}
-			} else if (v.type === 'return') {
-				return v;
-			}
-		}
-		return NULL;
-	},
-};
+
+				return executeBody();
+			});
+		};
+		return executeBody();
+	});
+}
+
+export const EachEvaluator = evaluationStepsToEvaluator(evalEach);

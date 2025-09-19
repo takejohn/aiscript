@@ -1,43 +1,24 @@
-import { isControl, type Control } from '../control.js';
+import { isControl } from '../control.js';
 import { assertFunction } from '../util.js';
-import type { Ast } from '../../index.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import { evalList } from '../evaluator-utils.js';
+import type { EvaluationStepResult } from '../evaluator.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
-import type { Value } from '../value.js';
+import type { Ast } from '../../index.js';
 
-export const CallEvaluator: Evaluator<Ast.Call> = {
-	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Call, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const callee = await context.eval(node.target, scope, callStack);
+function evalCall(node: Ast.Call, scope: Scope): EvaluationStepResult {
+	return instructions.eval(node.target, scope, (callee) => {
 		if (isControl(callee)) {
-			return callee;
+			return instructions.end(callee);
 		}
 		assertFunction(callee);
-		const args = [];
-		for (const expr of node.args) {
-			const arg = await context.eval(expr, scope, callStack);
-			if (isControl(arg)) {
-				return arg;
-			}
-			args.push(arg);
-		}
-		return context.fn(callee, args, callStack, node.loc.start);
-	},
 
-	evalSync(context: SyncEvaluatorContext, node: Ast.Call, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const callee = context.eval(node.target, scope, callStack);
-		if (isControl(callee)) {
-			return callee;
-		}
-		assertFunction(callee);
-		const args = [];
-		for (const expr of node.args) {
-			const arg = context.eval(expr, scope, callStack);
-			if (isControl(arg)) {
-				return arg;
-			}
-			args.push(arg);
-		}
-		return context.fn(callee, args, callStack, node.loc.start);
-	},
-};
+		return evalList(node.args, scope, (args) => {
+			return instructions.fn(callee, args, node.loc.start, (value) => {
+				return instructions.end(value);
+			});
+		});
+	});
+}
+
+export const CallEvaluator = evaluationStepsToEvaluator(evalCall);

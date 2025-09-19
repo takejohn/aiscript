@@ -1,43 +1,27 @@
 import { NULL } from '../value.js';
-import { isControl, type Control } from '../control.js';
+import { isControl } from '../control.js';
 import { isObject } from '../util.js';
 import { getPrimProp } from '../primitive-props.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { EvaluationStepResult } from '../evaluator.js';
 import type { Ast } from '../../index.js';
-import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
 
-export const PropEvaluator: Evaluator<Ast.Prop> = {
-	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Prop, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const target = await context.eval(node.target, scope, callStack);
+function evalProp(node: Ast.Prop, scope: Scope): EvaluationStepResult {
+	return instructions.eval(node.target, scope, (target) => {
 		if (isControl(target)) {
-			return target;
+			return instructions.end(target);
 		}
 		if (isObject(target)) {
 			if (target.value.has(node.name)) {
-				return target.value.get(node.name)!;
+				return instructions.end(target.value.get(node.name)!);
 			} else {
-				return NULL;
+				return instructions.end(NULL);
 			}
 		} else {
-			return getPrimProp(target, node.name);
+			return instructions.end(getPrimProp(target, node.name));
 		}
-	},
+	});
+}
 
-	evalSync(context: SyncEvaluatorContext, node: Ast.Prop, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const target = context.eval(node.target, scope, callStack);
-		if (isControl(target)) {
-			return target;
-		}
-		if (isObject(target)) {
-			if (target.value.has(node.name)) {
-				return target.value.get(node.name)!;
-			} else {
-				return NULL;
-			}
-		} else {
-			return getPrimProp(target, node.name);
-		}
-	},
-};
+export const PropEvaluator = evaluationStepsToEvaluator(evalProp);

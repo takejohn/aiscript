@@ -1,18 +1,12 @@
-import { CONTINUE, type Control } from '../control.js';
+import { CONTINUE } from '../control.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { EvaluationDoneResult, Logger } from '../evaluator.js';
 import type { Ast } from '../../index.js';
-import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
 
-export const ContinueEvaluator: Evaluator<Ast.Continue> = {
-	async evalAsync(context: AsyncEvaluatorContext, node: Ast.Continue, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		context.log('block:continue', { scope: scope.name });
-		return CONTINUE(node.label);
-	},
+function evalContinue(node: Ast.Continue, scope: Scope, logger: Logger): EvaluationDoneResult {
+	logger.log('block:continue', { scope: scope.name });
+	return instructions.end(CONTINUE(node.label));
+}
 
-	evalSync(context: SyncEvaluatorContext, node: Ast.Continue, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		context.log('block:continue', { scope: scope.name });
-		return CONTINUE(node.label);
-	},
-};
+export const ContinueEvaluator = evaluationStepsToEvaluator(evalContinue);

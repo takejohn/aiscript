@@ -1,61 +1,59 @@
 import { NULL } from '../value.js';
-import { isControl, unWrapLabeledBreak, type Control } from '../control.js';
+import { isControl, unWrapLabeledBreak } from '../control.js';
 import { assertBoolean } from '../util.js';
-import { evalClauseAsync, evalClauseSync } from '../evaluator-utils.js';
+import { evalClause } from '../evaluator-utils.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { EvaluationStepResult } from '../evaluator.js';
 import type { Ast } from '../../index.js';
-import type { Value } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { CallInfo, Evaluator } from '../types.js';
 
-export const IfEvaluator: Evaluator<Ast.If> = {
-	async evalAsync(context: AsyncEvaluatorContext, node: Ast.If, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const cond = await context.eval(node.cond, scope, callStack);
-		if (isControl(cond)) {
-			return cond;
-		}
-		assertBoolean(cond);
-		if (cond.value) {
-			return unWrapLabeledBreak(await evalClauseAsync(context, node.then, scope, callStack), node.label);
-		}
-		for (const elseif of node.elseif) {
-			const cond = await context.eval(elseif.cond, scope, callStack);
+function evalIf(node: Ast.If, scope: Scope): EvaluationStepResult {
+	function evalStart(): EvaluationStepResult {
+		return instructions.eval(node.cond, scope, (cond) => {
 			if (isControl(cond)) {
-				return cond;
+				return instructions.end(cond);
 			}
 			assertBoolean(cond);
 			if (cond.value) {
-				return unWrapLabeledBreak(await evalClauseAsync(context, elseif.then, scope, callStack), node.label);
+				return evalClause(node.then, scope, (value) => {
+					return instructions.end(unWrapLabeledBreak(value, node.label));
+				});
 			}
-		}
-		if (node.else) {
-			return unWrapLabeledBreak(await evalClauseAsync(context, node.else, scope, callStack), node.label);
-		}
-		return NULL;
-	},
+			return evalElseif(node.elseif.values());
+		});
+	}
 
-	evalSync(context: SyncEvaluatorContext, node: Ast.If, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const cond = context.eval(node.cond, scope, callStack);
-		if (isControl(cond)) {
-			return cond;
+	function evalElseif(elseifIterator: Iterator<Ast.If['elseif'][number]>): EvaluationStepResult {
+		const elseifResult = elseifIterator.next();
+		if (elseifResult.done) {
+			return evalElse();
 		}
-		assertBoolean(cond);
-		if (cond.value) {
-			return unWrapLabeledBreak(evalClauseSync(context, node.then, scope, callStack), node.label);
-		}
-		for (const elseif of node.elseif) {
-			const cond = context.eval(elseif.cond, scope, callStack);
+
+		const elseif = elseifResult.value;
+		return instructions.eval(elseif.cond, scope, (cond) => {
 			if (isControl(cond)) {
-				return cond;
+				return instructions.end(cond);
 			}
 			assertBoolean(cond);
 			if (cond.value) {
-				return unWrapLabeledBreak(evalClauseSync(context, elseif.then, scope, callStack), node.label);
+				return evalClause(elseif.then, scope, (value) => {
+					return instructions.end(unWrapLabeledBreak(value, node.label));
+				});
 			}
-		}
+			return evalElseif(elseifIterator);
+		});
+	}
+
+	function evalElse(): EvaluationStepResult {
 		if (node.else) {
-			return unWrapLabeledBreak(evalClauseSync(context, node.else, scope, callStack), node.label);
+			return evalClause(node.else, scope, (value) => {
+				return instructions.end(unWrapLabeledBreak(value, node.label));
+			});
 		}
-		return NULL;
-	},
-};
+		return instructions.end(NULL);
+	}
+
+	return evalStart();
+}
+
+export const IfEvaluator = evaluationStepsToEvaluator(evalIf);

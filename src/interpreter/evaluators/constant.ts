@@ -1,27 +1,27 @@
-import { autobind } from '../../utils/mini-autobind.js';
-import { BOOL, NULL, NUM, STR, type Value } from '../value.js';
+import { BOOL, NULL, NUM, STR } from '../value.js';
+import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
+import type { EvaluationStepResult } from '../evaluator.js';
 import type { Ast } from '../../index.js';
-import type { Control } from '../control.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from '../context.js';
-import type { Evaluator } from '../types.js';
 
-type ConstantNode = Ast.Null | Ast.Bool | Ast.Num | Ast.Str;
+function evalNull(): EvaluationStepResult {
+	return instructions.end(NULL);
+}
 
-export class ConstantEvaluator<N extends ConstantNode> implements Evaluator<N> {
-	public static readonly NULL = new ConstantEvaluator<Ast.Null>(() => NULL);
-	public static readonly BOOL = new ConstantEvaluator<Ast.Bool>((node) => BOOL(node.value));
-	public static readonly NUM = new ConstantEvaluator<Ast.Num>((node) => NUM(node.value));
-	public static readonly STR = new ConstantEvaluator<Ast.Str>((node) => STR(node.value));
+function evalBool(node: Ast.Bool): EvaluationStepResult {
+	return instructions.end(BOOL(node.value));
+}
 
-	private constructor(private translate: (node: N) => Value) {}
+function evalNum(node: Ast.Num): EvaluationStepResult {
+	return instructions.end(NUM(node.value));
+}
 
-	@autobind
-	async evalAsync(context: AsyncEvaluatorContext, node: N): Promise<Value | Control> {
-		return this.translate(node);
-	}
+function evalStr(node: Ast.Str): EvaluationStepResult {
+	return instructions.end(STR(node.value));
+}
 
-	@autobind
-	evalSync(context: SyncEvaluatorContext, node: N): Value | Control {
-		return this.translate(node);
-	}
+export const ConstantEvaluator = {
+	NULL: evaluationStepsToEvaluator<Ast.Null>(evalNull),
+	BOOL: evaluationStepsToEvaluator(evalBool),
+	NUM: evaluationStepsToEvaluator(evalNum),
+	STR: evaluationStepsToEvaluator(evalStr),
 };
