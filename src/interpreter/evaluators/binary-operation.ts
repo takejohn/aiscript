@@ -1,7 +1,7 @@
 import { isControl } from '../control.js';
 import { assertFunction } from '../util.js';
 import { evaluationStepsToEvaluator, instructions } from '../evaluator.js';
-import type { Evaluator } from '../types.js';
+import type { NodeEvaluator } from '../types.js';
 import type { Ast } from '../../index.js';
 import type { Scope } from '../scope.js';
 import type { EvaluationStepResult } from '../evaluator.js';
@@ -21,7 +21,7 @@ type BinaryOperationNodes = {
 	'Core:neq': Ast.Neq,
 };
 
-function createEvaluator<F extends keyof BinaryOperationNodes>(fnName: F): Evaluator<BinaryOperationNodes[F]> {
+function createEvaluator<F extends keyof BinaryOperationNodes>(fnName: F): NodeEvaluator<BinaryOperationNodes[F]> {
 	const func = function(node: BinaryOperationNodes[F], scope: Scope): EvaluationStepResult {
 		const callee = scope.get(fnName);
 		assertFunction(callee);

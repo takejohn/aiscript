@@ -15,7 +15,7 @@ export type CallInfo = {
 	pos: Ast.Pos | undefined;
 };
 
-export interface Evaluator<N extends Ast.Node> {
+export interface NodeEvaluator<N extends Ast.Node> {
 	evalAsync(
 		context: AsyncEvaluatorContext,
 		node: N,

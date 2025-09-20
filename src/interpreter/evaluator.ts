@@ -3,7 +3,7 @@ import type { Reference } from './reference.js';
 import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { Ast, Scope } from '../index.js';
 import type { Control } from './control.js';
-import type { CallInfo, Evaluator, LogObject } from './types.js';
+import type { CallInfo, NodeEvaluator, LogObject } from './types.js';
 import type { Value, VFn } from './value.js';
 
 export type Logger = {
@@ -96,7 +96,7 @@ export const instructions = Object.freeze({
 	}),
 });
 
-export function evaluationStepsToEvaluator<N extends Ast.Node>(first: EvaluationStartStep<N>): Evaluator<N> {
+export function evaluationStepsToEvaluator<N extends Ast.Node>(first: EvaluationStartStep<N>): NodeEvaluator<N> {
 	return {
 		async evalAsync(context: AsyncEvaluatorContext, node: N, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
 			let result = first(node, scope, context);

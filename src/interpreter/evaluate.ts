@@ -29,13 +29,13 @@ import { AndEvaluator } from './evaluators/and.js';
 import { OrEvaluator } from './evaluators/or.js';
 import { IndexEvaluator } from './evaluators/index.js';
 import { NeverEvaluator } from './evaluators/never.js';
-import type { CallInfo, Evaluator } from './types.js';
+import type { CallInfo, NodeEvaluator } from './types.js';
 import type { Control } from './control.js';
 import type { Value } from './value.js';
 import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { Ast, Scope } from '../index.js';
 
-const evaluatorMap: { [T in Ast.Node['type']]: Evaluator<Ast.Node & { type: T }>} = {
+const evaluatorMap: { [T in Ast.Node['type']]: NodeEvaluator<Ast.Node & { type: T }>} = {
 	'call': CallEvaluator,
 	'if': IfEvaluator,
 	'match': MatchEvaluator,
@@ -87,7 +87,7 @@ const evaluatorMap: { [T in Ast.Node['type']]: Evaluator<Ast.Node & { type: T }>
 	'attr': NeverEvaluator,
 };
 
-function selectEvaluator<T extends Ast.Node['type']>(type: T): Evaluator<Ast.Node & { type: T }> {
+function selectEvaluator<T extends Ast.Node['type']>(type: T): NodeEvaluator<Ast.Node & { type: T }> {
 	if (!Object.hasOwn(evaluatorMap, type)) {
 		throw new Error('invalid node type');
 	}
