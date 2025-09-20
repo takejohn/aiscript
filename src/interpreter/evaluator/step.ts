@@ -1,15 +1,12 @@
 import { evaluateReferenceAsync, evaluateReferenceSync } from './reference-evaluator.js';
+import type { Logger } from '../logger.js';
 import type { Reference } from '../reference.js';
 import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { Ast, Scope } from '../../index.js';
 import type { Control } from '../control.js';
 import type { NodeEvaluator } from './types.js';
-import type { CallInfo, LogObject } from '../types.js';
+import type { CallInfo } from '../types.js';
 import type { Value, VFn } from '../value.js';
-
-export type Logger = {
-	log(type: string, params: LogObject): void;
-}
 
 export type EvaluationStartStep<N extends Ast.Node, R = Value | Control> = (node: N, scope: Scope, logger: Logger) => EvaluationStepResult<R>;
 
@@ -100,18 +97,18 @@ export const instructions = Object.freeze({
 export function evaluationStepsToEvaluator<N extends Ast.Node, R = Value | Control>(first: EvaluationStartStep<N, R>): NodeEvaluator<N, R> {
 	return {
 		async evalAsync(context: AsyncEvaluatorContext, node: N, scope: Scope, callStack: readonly CallInfo[]): Promise<R> {
-			let result = first(node, scope, context);
+			let result = first(node, scope, context.log);
 			while (!result.done) {
 				const input = await runInstructionAsync(result.instruction, context, callStack);
-				result = result.then(input, context);
+				result = result.then(input, context.log);
 			}
 			return result.value;
 		},
 		evalSync(context: SyncEvaluatorContext, node: N, scope: Scope, callStack: readonly CallInfo[]): R {
-			let result = first(node, scope, context);
+			let result = first(node, scope, context.log);
 			while (!result.done) {
 				const input = runInstructionSync(result.instruction, context, callStack);
-				result = result.then(input, context);
+				result = result.then(input, context.log);
 			}
 			return result.value;
 		},

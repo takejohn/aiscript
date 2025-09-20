@@ -1,8 +1,8 @@
 import { autobind } from '../utils/mini-autobind.js';
 import { AiScriptRuntimeError } from '../error.js';
+import type { LogObject } from './logger.js';
 import type { Value } from './value.js';
 import type { Variable } from './variable.js';
-import type { LogObject } from './types.js';
 
 export class Scope {
 	private parent?: Scope;

@@ -30,12 +30,13 @@ import { evalOr } from './value-evaluators/or.js';
 import { evalIndex } from './value-evaluators/index.js';
 import { evalNever } from './value-evaluators/never.js';
 import { evaluationStepsToEvaluator } from './step.js';
+import type { Logger } from '../logger.js';
 import type { CallInfo } from '../types.js';
 import type { Control } from '../control.js';
 import type { Value } from '../value.js';
 import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { Ast, Scope } from '../../index.js';
-import type { EvaluationStepResult, Logger } from './step.js';
+import type { EvaluationStepResult } from './step.js';
 
 function evalNode(node: Ast.Node, scope: Scope, logger: Logger): EvaluationStepResult {
 	switch (node.type) {

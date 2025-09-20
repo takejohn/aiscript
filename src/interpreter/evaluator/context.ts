@@ -1,10 +1,11 @@
 import { type Value, type VFn } from '../value.js';
+import type { Logger } from '../logger.js';
 import type { Control } from '../control.js';
 import type { Ast, Scope } from '../../index.js';
-import type { CallInfo, LogObject } from '../types.js';
+import type { CallInfo } from '../types.js';
 
 interface EvaluatorContextBase {
-	log(type: string, params: LogObject): void;
+	log: Logger
 }
 
 export interface AsyncEvaluatorContext extends EvaluatorContextBase {
