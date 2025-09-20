@@ -11,7 +11,7 @@ import { unWrapRet, assertValue, type Control } from './control.js';
 import { assertString, expectAny, isFunction } from './util.js';
 import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
-import { evaluateAsync, evaluateSync } from './evaluator/evaluate.js';
+import { evaluateAsync, evaluateSync } from './evaluator/value-evaluator.js';
 import { define } from './define.js';
 import { LifecycleManager } from './lifecycle/manager.js';
 import type * as Ast from '../node.js';

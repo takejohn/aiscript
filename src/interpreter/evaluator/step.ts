@@ -1,4 +1,4 @@
-import { evaluateReferenceAsync, evaluateReferenceSync } from './evaluate-reference.js';
+import { evaluateReferenceAsync, evaluateReferenceSync } from './reference-evaluator.js';
 import type { Reference } from '../reference.js';
 import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { Ast, Scope } from '../../index.js';
