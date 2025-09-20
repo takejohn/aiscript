@@ -1,13 +1,13 @@
 import { isControl } from '../../control.js';
 import { assertNumber } from '../../util.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { Value } from '../../value.js';
 import type { Control } from '../../control.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Scope } from '../../scope.js';
 
-function evalPlus(node: Ast.Plus, scope: Scope): EvaluationStepResult {
+export function evalPlus(node: Ast.Plus, scope: Scope): EvaluationStepResult {
 	return instructions.eval<Value | Control>(node.expr, scope, (v) => {
 		if (isControl(v)) {
 			return instructions.end(v);
@@ -17,4 +17,3 @@ function evalPlus(node: Ast.Plus, scope: Scope): EvaluationStepResult {
 	});
 }
 
-export const PlusEvaluator = evaluationStepsToEvaluator(evalPlus);

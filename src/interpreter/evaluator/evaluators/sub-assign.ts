@@ -1,14 +1,14 @@
 import { NULL, NUM } from '../../value.js';
 import { isControl } from '../../control.js';
 import { assertNumber } from '../../util.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { Control } from '../../control.js';
 import type { Value } from '../../value.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Scope } from '../../scope.js';
 
-function evalSubAssign(node: Ast.SubAssign, scope: Scope): EvaluationStepResult {
+export function evalSubAssign(node: Ast.SubAssign, scope: Scope): EvaluationStepResult {
 	return instructions.evaluateReference(node.dest, scope, (target) => {
 		if (isControl(target)) {
 			return instructions.end(target);
@@ -28,4 +28,3 @@ function evalSubAssign(node: Ast.SubAssign, scope: Scope): EvaluationStepResult 
 	});
 }
 
-export const SubAssignEvaluator = evaluationStepsToEvaluator(evalSubAssign);

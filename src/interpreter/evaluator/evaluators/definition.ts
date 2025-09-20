@@ -2,13 +2,13 @@ import { NULL } from '../../value.js';
 import { assertValue, isControl } from '../../control.js';
 import { isFunction } from '../../util.js';
 import { define } from '../../define.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { EvaluationDoneResult, EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Value } from '../../value.js';
 import type { Scope } from '../../scope.js';
 
-function evalDefinition(node: Ast.Definition, scope: Scope): EvaluationStepResult {
+export function evalDefinition(node: Ast.Definition, scope: Scope): EvaluationStepResult {
 	return instructions.eval(node.expr, scope, (value) => {
 		if (isControl(value)) {
 			return instructions.end(value);
@@ -54,4 +54,3 @@ function evalDefinition(node: Ast.Definition, scope: Scope): EvaluationStepResul
 	});
 }
 
-export const DefinitionEvaluator = evaluationStepsToEvaluator(evalDefinition);

@@ -1,8 +1,3 @@
-import { evaluationStepsToEvaluator } from '../step.js';
-import type { Ast } from '../../../index.js';
-
-function evalNever(): never {
+export function evalNever(): never {
 	throw new Error('invalid node type');
 }
-
-export const NeverEvaluator = evaluationStepsToEvaluator<Ast.Node>(evalNever);

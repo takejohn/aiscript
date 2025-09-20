@@ -1,12 +1,12 @@
 import { STR } from '../../value.js';
 import { isControl } from '../../control.js';
 import { reprValue } from '../../util.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Scope } from '../../scope.js';
 
-function evalTmpl(node: Ast.Tmpl, scope: Scope): EvaluationStepResult {
+export function evalTmpl(node: Ast.Tmpl, scope: Scope): EvaluationStepResult {
 	let str = '';
 	const exprIterator = node.tmpl.values();
 
@@ -34,4 +34,3 @@ function evalTmpl(node: Ast.Tmpl, scope: Scope): EvaluationStepResult {
 	return evalExpr();
 }
 
-export const TmplEvaluator = evaluationStepsToEvaluator(evalTmpl);

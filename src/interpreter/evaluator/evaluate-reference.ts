@@ -5,28 +5,25 @@ import { evalIndexReference } from './reference-evaluators/index.js';
 import { evalPropReference } from './reference-evaluators/prop.js';
 import { evalArrReference } from './reference-evaluators/arr.js';
 import { evalObjReference } from './reference-evaluators/obj.js';
-import type { NodeEvaluator } from './types.js';
+import type { EvaluationStepResult } from './step.js';
 import type { Control } from '../control.js';
 import type { CallInfo } from '../types.js';
 import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { Reference } from '../reference.js';
 import type { Ast, Scope } from '../../index.js';
 
-const referenceEvaluatorMap: { [T in Ast.Node['type']]?: NodeEvaluator<Ast.Node & { type: T }, Reference | Control>} = {
-	'identifier': evaluationStepsToEvaluator(evalIdentifierReference),
-	'index': evaluationStepsToEvaluator(evalIndexReference),
-	'prop': evaluationStepsToEvaluator(evalPropReference),
-	'arr': evaluationStepsToEvaluator(evalArrReference),
-	'obj': evaluationStepsToEvaluator(evalObjReference),
-};
-
-function selectReferenceEvaluator<T extends Ast.Node['type']>(type: T): NodeEvaluator<Ast.Node & { type: T }, Reference | Control> {
-	if (!Object.hasOwn(referenceEvaluatorMap, type)) {
-		throw new AiScriptRuntimeError('The left-hand side of an assignment expression must be a variable or a property/index access.');
+function evalReference(node: Ast.Node, scope: Scope): EvaluationStepResult<Reference | Control> {
+	switch (node.type) {
+		case 'identifier': return evalIdentifierReference(node, scope);
+		case 'index': return evalIndexReference(node, scope);
+		case 'prop': return evalPropReference(node, scope);
+		case 'arr': return evalArrReference(node, scope);
+		case 'obj': return evalObjReference(node, scope);
+		default: throw new AiScriptRuntimeError('The left-hand side of an assignment expression must be a variable or a property/index access.');
 	}
-	const referenceEvaluator = referenceEvaluatorMap[type]!;
-	return referenceEvaluator;
 }
+
+const referenceEvaluator = evaluationStepsToEvaluator(evalReference);
 
 export async function evaluateReferenceAsync<T extends Ast.Node['type']>(
 	context: AsyncEvaluatorContext,
@@ -34,7 +31,6 @@ export async function evaluateReferenceAsync<T extends Ast.Node['type']>(
 	scope: Scope,
 	callStack: readonly CallInfo[]
 ): Promise<Reference | Control> {
-	const referenceEvaluator = selectReferenceEvaluator(node.type);
 	return await referenceEvaluator.evalAsync(context, node, scope, callStack);
 }
 
@@ -44,6 +40,5 @@ export function evaluateReferenceSync<T extends Ast.Node['type']>(
 	scope: Scope,
 	callStack: readonly CallInfo[]
 ): Reference | Control {
-	const evaluator = selectReferenceEvaluator(node.type);
-	return evaluator.evalSync(context, node, scope, callStack);
+	return referenceEvaluator.evalSync(context, node, scope, callStack);
 }

@@ -2,12 +2,12 @@ import { NULL } from '../../value.js';
 import { isControl, unWrapLabeledBreak } from '../../control.js';
 import { assertBoolean } from '../../util.js';
 import { evalClause } from '../utils.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Scope } from '../../scope.js';
 
-function evalIf(node: Ast.If, scope: Scope): EvaluationStepResult {
+export function evalIf(node: Ast.If, scope: Scope): EvaluationStepResult {
 	function evalStart(): EvaluationStepResult {
 		return instructions.eval(node.cond, scope, (cond) => {
 			if (isControl(cond)) {
@@ -56,4 +56,3 @@ function evalIf(node: Ast.If, scope: Scope): EvaluationStepResult {
 	return evalStart();
 }
 
-export const IfEvaluator = evaluationStepsToEvaluator(evalIf);

@@ -2,14 +2,14 @@ import { NULL } from '../../value.js';
 import { isControl } from '../../control.js';
 import { assertNumber, assertString, isArray, isObject, reprValue } from '../../util.js';
 import { AiScriptIndexOutOfRangeError, AiScriptRuntimeError } from '../../../error.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { Control } from '../../control.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Value } from '../../value.js';
 import type { Scope } from '../../scope.js';
 
-function evalIndex(node: Ast.Index, scope: Scope): EvaluationStepResult {
+export function evalIndex(node: Ast.Index, scope: Scope): EvaluationStepResult {
 	return instructions.eval(node.target, scope, (target) => {
 		if (isControl(target)) {
 			return instructions.end(target);
@@ -43,4 +43,3 @@ function getIndex(target: Value, i: Value): Value {
 	}
 }
 
-export const IndexEvaluator = evaluationStepsToEvaluator(evalIndex);

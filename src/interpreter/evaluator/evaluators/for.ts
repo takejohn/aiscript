@@ -2,12 +2,12 @@ import { NULL, NUM } from '../../value.js';
 import { isControl } from '../../control.js';
 import { assertNumber } from '../../util.js';
 import { evalClause } from '../utils.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Scope } from '../../scope.js';
 
-function evalFor(node: Ast.For, scope: Scope): EvaluationStepResult {
+export function evalFor(node: Ast.For, scope: Scope): EvaluationStepResult {
 	if (node.times != null) {
 		return evalForTimes(node, scope);
 	} else {
@@ -15,7 +15,7 @@ function evalFor(node: Ast.For, scope: Scope): EvaluationStepResult {
 	}
 }
 
-function evalForTimes(node: Ast.For, scope: Scope): EvaluationStepResult {
+export function evalForTimes(node: Ast.For, scope: Scope): EvaluationStepResult {
 	return instructions.eval(node.times!, scope, (times) => {
 		if (isControl(times)) {
 			return instructions.end(times);
@@ -25,7 +25,7 @@ function evalForTimes(node: Ast.For, scope: Scope): EvaluationStepResult {
 	});
 }
 
-function evalForRange(node: Ast.For, scope: Scope): EvaluationStepResult {
+export function evalForRange(node: Ast.For, scope: Scope): EvaluationStepResult {
 	return instructions.eval(node.from!, scope, (from) => {
 		if (isControl(from)) {
 			return instructions.end(from);
@@ -74,4 +74,3 @@ function evalBody(node: Ast.For, getScope: (i: number) => Scope, start: number, 
 	});
 }
 
-export const ForEvaluator = evaluationStepsToEvaluator(evalFor);

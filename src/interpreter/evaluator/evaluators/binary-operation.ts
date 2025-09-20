@@ -1,30 +1,16 @@
 import { isControl } from '../../control.js';
 import { assertFunction } from '../../util.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { Value } from '../../value.js';
 import type { Control } from '../../control.js';
-import type { NodeEvaluator } from '../types.js';
 import type { Ast } from '../../../index.js';
 import type { Scope } from '../../scope.js';
 import type { EvaluationStepResult } from '../step.js';
 
-type BinaryOperationNodes = {
-	'Core:pow': Ast.Pow,
-	'Core:mul': Ast.Mul,
-	'Core:div': Ast.Div,
-	'Core:mod': Ast.Rem,
-	'Core:add': Ast.Add,
-	'Core:sub': Ast.Sub,
-	'Core:lt': Ast.Lt,
-	'Core:lteq': Ast.Lteq,
-	'Core:gt': Ast.Gt,
-	'Core:gteq': Ast.Gteq,
-	'Core:eq': Ast.Eq,
-	'Core:neq': Ast.Neq,
-};
+type BinaryOperationNode = Ast.Expression & { left: Ast.Expression, right: Ast.Expression };
 
-function createEvaluator<F extends keyof BinaryOperationNodes>(fnName: F): NodeEvaluator<BinaryOperationNodes[F]> {
-	const func = function(node: BinaryOperationNodes[F], scope: Scope): EvaluationStepResult {
+const createEvaluationStep = <N extends BinaryOperationNode>(fnName: string) =>
+	function(node: N, scope: Scope): EvaluationStepResult {
 		const callee = scope.get(fnName);
 		assertFunction(callee);
 
@@ -45,20 +31,15 @@ function createEvaluator<F extends keyof BinaryOperationNodes>(fnName: F): NodeE
 		});
 	};
 
-	return evaluationStepsToEvaluator(func);
-}
-
-export const BinaryOperationEvaluator = Object.freeze({
-	POW: createEvaluator('Core:pow'),
-	MUL: createEvaluator('Core:mul'),
-	DIV: createEvaluator('Core:div'),
-	REM: createEvaluator('Core:mod'),
-	ADD: createEvaluator('Core:add'),
-	SUB: createEvaluator('Core:sub'),
-	LT: createEvaluator('Core:lt'),
-	LTEQ: createEvaluator('Core:lteq'),
-	GT: createEvaluator('Core:gt'),
-	GTEQ: createEvaluator('Core:gteq'),
-	EQ: createEvaluator('Core:eq'),
-	NEQ: createEvaluator('Core:neq'),
-});
+export const evalPow = createEvaluationStep<Ast.Pow>('Core:pow');
+export const evalMul = createEvaluationStep<Ast.Mul>('Core:mul');
+export const evalDiv = createEvaluationStep<Ast.Div>('Core:div');
+export const evalRem = createEvaluationStep<Ast.Rem>('Core:mod');
+export const evalAdd = createEvaluationStep<Ast.Add>('Core:add');
+export const evalSub = createEvaluationStep<Ast.Sub>('Core:sub');
+export const evalLt = createEvaluationStep<Ast.Lt>('Core:lt');
+export const evalLteq = createEvaluationStep<Ast.Lteq>('Core:lteq');
+export const evalGt = createEvaluationStep<Ast.Gt>('Core:gt');
+export const evalGteq = createEvaluationStep<Ast.Gteq>('Core:gteq');
+export const evalEq = createEvaluationStep<Ast.Eq>('Core:eq');
+export const evalNeq = createEvaluationStep<Ast.Neq>('Core:neq');

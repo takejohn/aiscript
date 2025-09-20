@@ -1,10 +1,10 @@
 import { NULL } from '../../value.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Scope } from '../../scope.js';
 
-function evalLoop(node: Ast.Loop, scope: Scope): EvaluationStepResult {
+export function evalLoop(node: Ast.Loop, scope: Scope): EvaluationStepResult {
 	return instructions.run(node.statements, scope.createChildScope(), (v) => {
 		if (v.type === 'break') {
 			if (v.label != null && v.label !== node.label) {
@@ -22,4 +22,3 @@ function evalLoop(node: Ast.Loop, scope: Scope): EvaluationStepResult {
 	});
 }
 
-export const LoopEvaluator = evaluationStepsToEvaluator(evalLoop);

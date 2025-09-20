@@ -1,12 +1,12 @@
 import { FN, NULL } from '../../value.js';
 import { isControl } from '../../control.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Value, VUserFn } from '../../value.js';
 import type { Scope } from '../../scope.js';
 
-function evalFn(node: Ast.Fn, scope: Scope): EvaluationStepResult {
+export function evalFn(node: Ast.Fn, scope: Scope): EvaluationStepResult {
 	const params: VUserFn['params'] = [];
 	const paramIterator = node.params.values();
 	const evalParams = (): EvaluationStepResult => {
@@ -44,4 +44,3 @@ function evalFn(node: Ast.Fn, scope: Scope): EvaluationStepResult {
 	return evalParams();
 }
 
-export const FnEvaluator = evaluationStepsToEvaluator(evalFn);

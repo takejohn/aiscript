@@ -1,12 +1,12 @@
 import { OBJ } from '../../value.js';
 import { isControl } from '../../control.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Value } from '../../value.js';
 import type { Scope } from '../../scope.js';
 
-function evalObj(node: Ast.Obj, scope: Scope): EvaluationStepResult {
+export function evalObj(node: Ast.Obj, scope: Scope): EvaluationStepResult {
 	const obj = new Map<string, Value>();
 	const kvExprs = node.value.entries();
 
@@ -29,4 +29,3 @@ function evalObj(node: Ast.Obj, scope: Scope): EvaluationStepResult {
 	return evaluateKvs();
 }
 
-export const ObjEvaluator = evaluationStepsToEvaluator(evalObj);

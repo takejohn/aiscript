@@ -2,13 +2,13 @@ import { NULL } from '../../value.js';
 import { isControl, unWrapLabeledBreak } from '../../control.js';
 import { eq } from '../../util.js';
 import { evalClause } from '../utils.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Value } from '../../value.js';
 import type { Scope } from '../../scope.js';
 
-function evalMatch(node: Ast.Match, scope: Scope): EvaluationStepResult {
+export function evalMatch(node: Ast.Match, scope: Scope): EvaluationStepResult {
 	function evalAbout(): EvaluationStepResult {
 		return instructions.eval(node.about, scope, (about) => {
 			if (isControl(about)) {
@@ -50,4 +50,3 @@ function evalMatch(node: Ast.Match, scope: Scope): EvaluationStepResult {
 	return evalAbout();
 }
 
-export const MatchEvaluator = evaluationStepsToEvaluator(evalMatch);

@@ -2,12 +2,12 @@ import { NULL } from '../../value.js';
 import { isControl } from '../../control.js';
 import { assertArray } from '../../util.js';
 import { define } from '../../define.js';
-import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import { instructions } from '../step.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Scope } from '../../scope.js';
 
-function evalEach(node: Ast.Each, scope: Scope): EvaluationStepResult {
+export function evalEach(node: Ast.Each, scope: Scope): EvaluationStepResult {
 	return instructions.eval(node.items, scope, (items) => {
 		if (isControl(items)) {
 			return instructions.end(items);
@@ -45,4 +45,3 @@ function evalEach(node: Ast.Each, scope: Scope): EvaluationStepResult {
 	});
 }
 
-export const EachEvaluator = evaluationStepsToEvaluator(evalEach);
