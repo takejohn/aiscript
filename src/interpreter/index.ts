@@ -11,12 +11,12 @@ import { unWrapRet, assertValue, type Control } from './control.js';
 import { assertString, expectAny, isFunction } from './util.js';
 import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
-import { evaluateAsync, evaluateSync } from './evaluate.js';
+import { evaluateAsync, evaluateSync } from './evaluator/evaluate.js';
 import { define } from './define.js';
 import { LifecycleManager } from './lifecycle/manager.js';
 import type * as Ast from '../node.js';
 import type { CallInfo, LogObject } from './types.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
+import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './evaluator/context.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn } from './value.js';
 
