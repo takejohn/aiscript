@@ -3,6 +3,7 @@ import { isControl } from '../../control.js';
 import { assertNumber, assertString, isArray, isObject, reprValue } from '../../util.js';
 import { AiScriptIndexOutOfRangeError, AiScriptRuntimeError } from '../../../error.js';
 import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import type { Control } from '../../control.js';
 import type { EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
 import type { Value } from '../../value.js';
@@ -13,7 +14,7 @@ function evalIndex(node: Ast.Index, scope: Scope): EvaluationStepResult {
 		if (isControl(target)) {
 			return instructions.end(target);
 		}
-		return instructions.eval(node.index, scope, (i) => {
+		return instructions.eval<Value | Control>(node.index, scope, (i) => {
 			if (isControl(i)) {
 				return instructions.end(i);
 			}

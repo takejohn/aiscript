@@ -11,21 +11,21 @@ export type Logger = {
 	log(type: string, params: LogObject): void;
 }
 
-export type EvaluationStartStep<N extends Ast.Node> = (node: N, scope: Scope, logger: Logger) => EvaluationStepResult;
+export type EvaluationStartStep<N extends Ast.Node, R = Value | Control> = (node: N, scope: Scope, logger: Logger) => EvaluationStepResult<R>;
 
-export type EvaluationContinueStep<T extends InstructionType> = (value: InstructionResult[T], logger: Logger) => EvaluationStepResult;
+export type EvaluationContinueStep<T extends InstructionType, R = Value | Control> = (value: InstructionResult[T], logger: Logger) => EvaluationStepResult<R>;
 
-export type EvaluationStepResult = EvaluationDoneResult | EvaluationContinueResult;
+export type EvaluationStepResult<R = Value | Control> = EvaluationDoneResult<R> | EvaluationContinueResult<InstructionType, R>;
 
-export type EvaluationDoneResult = {
+export type EvaluationDoneResult<R = Value | Control> = {
 	done: true;
-	value: Value | Control;
+	value: R;
 };
 
-export type EvaluationContinueResult<T extends InstructionType = InstructionType> = {
+export type EvaluationContinueResult<T extends InstructionType = InstructionType, R = Value | Control> = {
 	done: false;
 	instruction: InstructionArgument & { type: T };
-	then: EvaluationContinueStep<T>;
+	then: EvaluationContinueStep<T, R>;
 };
 
 export type InstructionType = InstructionArgument['type'];
@@ -65,20 +65,20 @@ type InstructionResult = {
 };
 
 export const instructions = Object.freeze({
-	end: (value: Value | Control): EvaluationDoneResult => ({ done: true, value }),
-	eval: (node: Ast.Node, scope: Scope, then: EvaluationContinueStep<'eval'>): EvaluationContinueResult<'eval'> => ({
+	end: <R = Value | Control>(value: R): EvaluationDoneResult<R> => ({ done: true, value }),
+	eval: <R = Value | Control>(node: Ast.Node, scope: Scope, then: EvaluationContinueStep<'eval', R>): EvaluationContinueResult<'eval', R> => ({
 		done: false,
 		instruction: { type: 'eval', node, scope },
 		then,
 	}),
-	evaluateReference: (node: Ast.Node, scope: Scope, then: EvaluationContinueStep<'evaluateReference'>): EvaluationContinueResult<'evaluateReference'> => ({
+	evaluateReference: <R = Value | Control>(node: Ast.Node, scope: Scope, then: EvaluationContinueStep<'evaluateReference', R>): EvaluationContinueResult<'evaluateReference', R> => ({
 		done: false,
 		instruction: { type: 'evaluateReference', node, scope },
 		then,
 	}),
-	fn: (fn: VFn, args: Value[], ...rest: [Ast.Pos, EvaluationContinueStep<'fn'>] | [EvaluationContinueStep<'fn'>]): EvaluationContinueResult<'fn'> => {
+	fn: <R = Value | Control>(fn: VFn, args: Value[], ...rest: [Ast.Pos, EvaluationContinueStep<'fn', R>] | [EvaluationContinueStep<'fn', R>]): EvaluationContinueResult<'fn', R> => {
 		let pos: Ast.Pos | undefined;
-		let then: EvaluationContinueStep<'fn'>;
+		let then: EvaluationContinueStep<'fn', R>;
 		if (rest.length === 2) {
 			[pos, then] = rest;
 		} else {
@@ -90,16 +90,16 @@ export const instructions = Object.freeze({
 			then,
 		};
 	},
-	run: (program: Ast.Node[], scope: Scope, then: EvaluationContinueStep<'run'>): EvaluationContinueResult<'run'> => ({
+	run: <R>(program: Ast.Node[], scope: Scope, then: EvaluationContinueStep<'run', R>): EvaluationContinueResult<'run', R> => ({
 		done: false,
 		instruction: { type: 'run', program, scope },
 		then,
 	}),
 });
 
-export function evaluationStepsToEvaluator<N extends Ast.Node>(first: EvaluationStartStep<N>): NodeEvaluator<N> {
+export function evaluationStepsToEvaluator<N extends Ast.Node, R = Value | Control>(first: EvaluationStartStep<N, R>): NodeEvaluator<N, R> {
 	return {
-		async evalAsync(context: AsyncEvaluatorContext, node: N, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
+		async evalAsync(context: AsyncEvaluatorContext, node: N, scope: Scope, callStack: readonly CallInfo[]): Promise<R> {
 			let result = first(node, scope, context);
 			while (!result.done) {
 				const input = await runInstructionAsync(result.instruction, context, callStack);
@@ -107,7 +107,7 @@ export function evaluationStepsToEvaluator<N extends Ast.Node>(first: Evaluation
 			}
 			return result.value;
 		},
-		evalSync(context: SyncEvaluatorContext, node: N, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
+		evalSync(context: SyncEvaluatorContext, node: N, scope: Scope, callStack: readonly CallInfo[]): R {
 			let result = first(node, scope, context);
 			while (!result.done) {
 				const input = runInstructionSync(result.instruction, context, callStack);

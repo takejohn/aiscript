@@ -1,163 +1,26 @@
 import { AiScriptRuntimeError } from '../../error.js';
-import { isControl } from '../control.js';
-import { Reference } from '../reference.js';
-import { assertNumber, assertObject, assertString, isArray, isObject, reprValue } from '../util.js';
-import type { Ast, Scope } from '../../index.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
+import { evaluationStepsToEvaluator } from './step.js';
+import { evalIdentifierReference } from './reference-evaluators/identifier.js';
+import { evalIndexReference } from './reference-evaluators/index.js';
+import { evalPropReference } from './reference-evaluators/prop.js';
+import { evalArrReference } from './reference-evaluators/arr.js';
+import { evalObjReference } from './reference-evaluators/obj.js';
+import type { NodeEvaluator } from './types.js';
 import type { Control } from '../control.js';
 import type { CallInfo } from '../types.js';
+import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
+import type { Reference } from '../reference.js';
+import type { Ast, Scope } from '../../index.js';
 
-interface ReferenceEvaluator<N extends Ast.Node> {
-	evalAsync(
-		context: AsyncEvaluatorContext,
-		node: N,
-		scope: Scope,
-		callStack: readonly CallInfo[]
-	): Promise<Reference | Control>;
-
-	evalSync(
-		context: SyncEvaluatorContext,
-		node: N,
-		scope: Scope,
-		callStack: readonly CallInfo[]
-	): Reference | Control;
-}
-
-const identifierReferenceEvaluator: ReferenceEvaluator<Ast.Identifier> = {
-	async evalAsync(context, node, scope) {
-		return Reference.variable(node.name, scope);
-	},
-
-	evalSync(context, node, scope) {
-		return Reference.variable(node.name, scope);
-	},
+const referenceEvaluatorMap: { [T in Ast.Node['type']]?: NodeEvaluator<Ast.Node & { type: T }, Reference | Control>} = {
+	'identifier': evaluationStepsToEvaluator(evalIdentifierReference),
+	'index': evaluationStepsToEvaluator(evalIndexReference),
+	'prop': evaluationStepsToEvaluator(evalPropReference),
+	'arr': evaluationStepsToEvaluator(evalArrReference),
+	'obj': evaluationStepsToEvaluator(evalObjReference),
 };
 
-const indexReferenceEvaluator: ReferenceEvaluator<Ast.Index> = {
-	async evalAsync(context, node, scope, callStack) {
-		const assignee = await context.eval(node.target, scope, callStack);
-		if (isControl(assignee)) {
-			return assignee;
-		}
-		const i = await context.eval(node.index, scope, callStack);
-		if (isControl(i)) {
-			return i;
-		}
-		if (isArray(assignee)) {
-			assertNumber(i);
-			return Reference.index(assignee, i.value);
-		} else if (isObject(assignee)) {
-			assertString(i);
-			return Reference.prop(assignee, i.value);
-		} else {
-			throw new AiScriptRuntimeError(`Cannot read prop (${reprValue(i)}) of ${assignee.type}.`);
-		}
-	},
-
-	evalSync(context, node, scope, callStack) {
-		const assignee = context.eval(node.target, scope, callStack);
-		if (isControl(assignee)) {
-			return assignee;
-		}
-		const i = context.eval(node.index, scope, callStack);
-		if (isControl(i)) {
-			return i;
-		}
-		if (isArray(assignee)) {
-			assertNumber(i);
-			return Reference.index(assignee, i.value);
-		} else if (isObject(assignee)) {
-			assertString(i);
-			return Reference.prop(assignee, i.value);
-		} else {
-			throw new AiScriptRuntimeError(`Cannot read prop (${reprValue(i)}) of ${assignee.type}.`);
-		}
-	},
-};
-
-const propReferenceEvaluator: ReferenceEvaluator<Ast.Prop> = {
-	async evalAsync(context, node, scope, callStack) {
-		const assignee = await context.eval(node.target, scope, callStack);
-		if (isControl(assignee)) {
-			return assignee;
-		}
-		assertObject(assignee);
-
-		return Reference.prop(assignee, node.name);
-	},
-
-	evalSync(context, node, scope, callStack) {
-		const assignee = context.eval(node.target, scope, callStack);
-		if (isControl(assignee)) {
-			return assignee;
-		}
-		assertObject(assignee);
-
-		return Reference.prop(assignee, node.name);
-	},
-};
-
-const arrReferenceEvaluator: ReferenceEvaluator<Ast.Arr> = {
-	async evalAsync(context, node, scope, callStack) {
-		const items: Reference[] = [];
-		for (const item of node.value) {
-			const ref = await evaluateReferenceAsync(context, item, scope, callStack);
-			if (isControl(ref)) {
-				return ref;
-			}
-			items.push(ref);
-		}
-		return Reference.arr(items);
-	},
-
-	evalSync(context, node, scope, callStack) {
-		const items: Reference[] = [];
-		for (const item of node.value) {
-			const ref = evaluateReferenceSync(context, item, scope, callStack);
-			if (isControl(ref)) {
-				return ref;
-			}
-			items.push(ref);
-		}
-		return Reference.arr(items);
-	},
-};
-
-const objReferenceEvaluator: ReferenceEvaluator<Ast.Obj> = {
-	async evalAsync(context, node, scope, callStack) {
-		const entries = new Map<string, Reference>();
-		for (const [key, item] of node.value.entries()) {
-			const ref = await evaluateReferenceAsync(context, item, scope, callStack);
-			if (isControl(ref)) {
-				return ref;
-			}
-			entries.set(key, ref);
-		}
-		return Reference.obj(entries);
-	},
-
-	evalSync(context, node, scope, callStack) {
-		const entries = new Map<string, Reference>();
-		for (const [key, item] of node.value.entries()) {
-			const ref = evaluateReferenceSync(context, item, scope, callStack);
-			if (isControl(ref)) {
-				return ref;
-			}
-			entries.set(key, ref);
-		}
-		return Reference.obj(entries);
-	},
-};
-
-const referenceEvaluatorMap: { [T in Ast.Node['type']]?: ReferenceEvaluator<Ast.Node & { type: T }>} = {
-	'identifier': identifierReferenceEvaluator,
-	'index': indexReferenceEvaluator,
-	'prop': propReferenceEvaluator,
-	'arr': arrReferenceEvaluator,
-	'obj': objReferenceEvaluator,
-};
-
-function selectReferenceEvaluator<T extends Ast.Node['type']>(type: T): ReferenceEvaluator<Ast.Node & { type: T }> {
+function selectReferenceEvaluator<T extends Ast.Node['type']>(type: T): NodeEvaluator<Ast.Node & { type: T }, Reference | Control> {
 	if (!Object.hasOwn(referenceEvaluatorMap, type)) {
 		throw new AiScriptRuntimeError('The left-hand side of an assignment expression must be a variable or a property/index access.');
 	}

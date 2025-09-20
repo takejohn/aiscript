@@ -1,6 +1,8 @@
 import { isControl } from '../../control.js';
 import { assertFunction } from '../../util.js';
 import { evaluationStepsToEvaluator, instructions } from '../step.js';
+import type { Value } from '../../value.js';
+import type { Control } from '../../control.js';
 import type { NodeEvaluator } from '../types.js';
 import type { Ast } from '../../../index.js';
 import type { Scope } from '../../scope.js';
@@ -31,7 +33,7 @@ function createEvaluator<F extends keyof BinaryOperationNodes>(fnName: F): NodeE
 				return instructions.end(left);
 			}
 
-			return instructions.eval(node.right, scope, (right) => {
+			return instructions.eval<Value | Control>(node.right, scope, (right) => {
 				if (isControl(right)) {
 					return instructions.end(right);
 				}
