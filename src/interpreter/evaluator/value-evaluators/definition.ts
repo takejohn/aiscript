@@ -1,7 +1,6 @@
 import { NULL } from '../../value.js';
 import { assertValue, isControl } from '../../control.js';
-import { isFunction } from '../../util.js';
-import { define } from '../../define.js';
+import { defineByDefinitionNode } from '../../define.js';
 import { instructions } from '../step.js';
 import type { EvaluationDoneResult, EvaluationStepResult } from '../step.js';
 import type { Ast } from '../../../index.js';
@@ -15,15 +14,7 @@ export function evalDefinition(node: Ast.Definition, scope: Scope): EvaluationSt
 		}
 
 		const defineValue = (): EvaluationDoneResult => {
-			if (
-				node.expr.type === 'fn'
-						&& node.dest.type === 'identifier'
-						&& isFunction(value)
-						&& !value.native
-			) {
-				value.name = node.dest.name;
-			}
-			define(scope, node.dest, value, node.mut);
+			defineByDefinitionNode(node, scope, value);
 			return instructions.end(NULL);
 		};
 

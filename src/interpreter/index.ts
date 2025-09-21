@@ -3,17 +3,18 @@
  */
 
 import { autobind } from '../utils/mini-autobind.js';
-import { AiScriptError, NonAiScriptError, AiScriptNamespaceError, AiScriptRuntimeError, AiScriptHostsideError } from '../error.js';
+import { AiScriptError, NonAiScriptError, AiScriptRuntimeError, AiScriptHostsideError } from '../error.js';
 import { nodeToJs } from '../utils/node-to-js.js';
 import { Scope } from './scope.js';
 import { std } from './lib/std.js';
 import { unWrapRet, assertValue, type Control } from './control.js';
-import { assertString, expectAny, isFunction } from './util.js';
+import { assertString, expectAny } from './util.js';
 import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
 import { evaluateAsync, evaluateSync } from './evaluator/value-evaluator.js';
-import { define } from './define.js';
+import { define, defineByDefinitionNode } from './define.js';
 import { EventManager } from './events/manager.js';
+import { iterateNs } from './namespace.js';
 import type { LogObject } from './logger.js';
 import type * as Ast from '../node.js';
 import type { CallInfo } from './types.js';
@@ -212,121 +213,19 @@ export class Interpreter {
 
 	@autobind
 	private async collectNs(script: Ast.Node[], scope = this.scope): Promise<void> {
-		for (const node of script) {
-			switch (node.type) {
-				case 'ns': {
-					await this.collectNsMember(node, scope);
-					break;
-				}
-
-				default: {
-					// nop
-				}
-			}
+		for (const [node, nsScope] of iterateNs(script, scope)) {
+			const value = await this._eval(node.expr, nsScope, []);
+			assertValue(value);
+			defineByDefinitionNode(node, nsScope, value);
 		}
 	}
 
 	@autobind
 	private collectNsSync(script: Ast.Node[], scope = this.scope): void {
-		for (const node of script) {
-			switch (node.type) {
-				case 'ns': {
-					this.collectNsMemberSync(node, scope);
-					break;
-				}
-
-				default: {
-					// nop
-				}
-			}
-		}
-	}
-
-	@autobind
-	private async collectNsMember(ns: Ast.Namespace, scope = this.scope): Promise<void> {
-		const nsScope = scope.createChildNamespaceScope(ns.name);
-
-		await this.collectNs(ns.members, nsScope);
-
-		for (const node of ns.members) {
-			switch (node.type) {
-				case 'def': {
-					if (node.dest.type !== 'identifier') {
-						throw new AiScriptNamespaceError('Destructuring assignment is invalid in namespace declarations.', node.loc.start);
-					}
-					if (node.mut) {
-						throw new AiScriptNamespaceError('No "var" in namespace declaration: ' + node.dest.name, node.loc.start);
-					}
-
-					const value = await this._eval(node.expr, nsScope, []);
-					assertValue(value);
-					if (
-						node.expr.type === 'fn'
-						&& isFunction(value)
-						&& !value.native
-					) {
-						value.name = nsScope.getNsPrefix() + node.dest.name;
-					}
-					define(nsScope, node.dest, value, node.mut);
-
-					break;
-				}
-
-				case 'ns': {
-					break; // nop
-				}
-
-				default: {
-					// exhaustiveness check
-					const n: never = node;
-					const nd = n as Ast.Node;
-					throw new AiScriptNamespaceError('invalid ns member type: ' + nd.type, nd.loc.start);
-				}
-			}
-		}
-	}
-
-	@autobind
-	private collectNsMemberSync(ns: Ast.Namespace, scope = this.scope): void {
-		const nsScope = scope.createChildNamespaceScope(ns.name);
-
-		this.collectNsSync(ns.members, nsScope);
-
-		for (const node of ns.members) {
-			switch (node.type) {
-				case 'def': {
-					if (node.dest.type !== 'identifier') {
-						throw new AiScriptNamespaceError('Destructuring assignment is invalid in namespace declarations.', node.loc.start);
-					}
-					if (node.mut) {
-						throw new AiScriptNamespaceError('No "var" in namespace declaration: ' + node.dest.name, node.loc.start);
-					}
-
-					const value = this._evalSync(node.expr, nsScope, []);
-					assertValue(value);
-					if (
-						node.expr.type === 'fn'
-						&& isFunction(value)
-						&& !value.native
-					) {
-						value.name = nsScope.getNsPrefix() + node.dest.name;
-					}
-					define(nsScope, node.dest, value, node.mut);
-
-					break;
-				}
-
-				case 'ns': {
-					break; // nop
-				}
-
-				default: {
-					// exhaustiveness check
-					const n: never = node;
-					const nd = n as Ast.Node;
-					throw new AiScriptNamespaceError('invalid ns member type: ' + nd.type, nd.loc.start);
-				}
-			}
+		for (const [node, nsScope] of iterateNs(script, scope)) {
+			const value = this._evalSync(node.expr, nsScope, []);
+			assertValue(value);
+			defineByDefinitionNode(node, nsScope, value);
 		}
 	}
 

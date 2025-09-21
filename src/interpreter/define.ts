@@ -1,5 +1,5 @@
 import { AiScriptRuntimeError } from '../error.js';
-import { assertArray, assertObject } from './util.js';
+import { assertArray, assertObject, isFunction } from './util.js';
 import { NULL } from './value.js';
 import type { Ast } from '../index.js';
 import type { Scope } from './scope.js';
@@ -29,4 +29,16 @@ export function define(scope: Scope, dest: Ast.Expression, value: Value, isMutab
 			throw new AiScriptRuntimeError('The left-hand side of an definition expression must be a variable.');
 		}
 	}
+}
+
+export function defineByDefinitionNode(node: Ast.Definition, scope: Scope, value: Value): void {
+	if (
+		node.expr.type === 'fn'
+				&& node.dest.type === 'identifier'
+				&& isFunction(value)
+				&& !value.native
+	) {
+		value.name = scope.getNsPrefix() + node.dest.name;
+	}
+	define(scope, node.dest, value, node.mut);
 }
