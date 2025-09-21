@@ -1,16 +1,12 @@
-import { evaluateReferenceAsync, evaluateReferenceSync } from './reference-evaluator.js';
 import type { Logger } from '../logger.js';
 import type { Reference } from '../reference.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { Ast, Scope } from '../../index.js';
 import type { Control } from '../control.js';
-import type { NodeEvaluator } from './types.js';
-import type { CallInfo } from '../types.js';
 import type { Value, VFn } from '../value.js';
 
 export type EvaluationStartStep<N extends Ast.Node, R = Value | Control> = (node: N, scope: Scope, logger: Logger) => EvaluationStepResult<R>;
 
-export type EvaluationContinueStep<T extends InstructionType, R = Value | Control> = (value: InstructionResult[T], logger: Logger) => EvaluationStepResult<R>;
+export type EvaluationContinueStep<T extends InstructionType, R = Value | Control> = (value: InstructionResult<T>, logger: Logger) => EvaluationStepResult<R>;
 
 export type EvaluationStepResult<R = Value | Control> = EvaluationDoneResult<R> | EvaluationContinueResult<InstructionType, R>;
 
@@ -27,7 +23,7 @@ export type EvaluationContinueResult<T extends InstructionType = InstructionType
 
 export type InstructionType = InstructionArgument['type'];
 
-type InstructionArgument = EvalInstructionArgument | EvaluateReferenceArgument | FnArgument | RunArgument;
+export type InstructionArgument = EvalInstructionArgument | EvaluateReferenceArgument | FnArgument | RunArgument;
 
 type EvalInstructionArgument = {
 	type: 'eval';
@@ -54,7 +50,9 @@ type RunArgument = {
 	scope: Scope;
 };
 
-type InstructionResult = {
+export type InstructionResult<T extends keyof InstructionResults> = InstructionResults[T];
+
+type InstructionResults = {
 	'eval': Value | Control;
 	'evaluateReference': Reference | Control;
 	'fn': Value;
@@ -93,50 +91,3 @@ export const instructions = Object.freeze({
 		then,
 	}),
 });
-
-export function evaluationStepsToEvaluator<N extends Ast.Node, R = Value | Control>(first: EvaluationStartStep<N, R>): NodeEvaluator<N, R> {
-	return {
-		async evalAsync(context: AsyncEvaluatorContext, node: N, scope: Scope, callStack: readonly CallInfo[]): Promise<R> {
-			let result = first(node, scope, context.log);
-			while (!result.done) {
-				const input = await runInstructionAsync(result.instruction, context, callStack);
-				result = result.then(input, context.log);
-			}
-			return result.value;
-		},
-		evalSync(context: SyncEvaluatorContext, node: N, scope: Scope, callStack: readonly CallInfo[]): R {
-			let result = first(node, scope, context.log);
-			while (!result.done) {
-				const input = runInstructionSync(result.instruction, context, callStack);
-				result = result.then(input, context.log);
-			}
-			return result.value;
-		},
-	};
-}
-
-function runInstructionAsync(
-	instruction: InstructionArgument,
-	context: AsyncEvaluatorContext,
-	callStack: readonly CallInfo[],
-): Promise<InstructionResult[InstructionType]> {
-	switch (instruction.type) {
-		case 'eval': return context.eval(instruction.node, instruction.scope, callStack);
-		case 'evaluateReference': return evaluateReferenceAsync(context, instruction.node, instruction.scope, callStack);
-		case 'fn': return context.fn(instruction.fn, instruction.args, callStack, instruction.pos);
-		case 'run': return context.run(instruction.program, instruction.scope, callStack);
-	}
-}
-
-function runInstructionSync(
-	instruction: InstructionArgument,
-	context: SyncEvaluatorContext,
-	callStack: readonly CallInfo[],
-): InstructionResult[InstructionType] {
-	switch (instruction.type) {
-		case 'eval': return context.eval(instruction.node, instruction.scope, callStack);
-		case 'evaluateReference': return evaluateReferenceSync(context, instruction.node, instruction.scope, callStack);
-		case 'fn': return context.fn(instruction.fn, instruction.args, callStack, instruction.pos);
-		case 'run': return context.run(instruction.program, instruction.scope, callStack);
-	}
-}

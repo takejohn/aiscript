@@ -5,7 +5,9 @@ import { define, defineByDefinitionNode } from '../define.js';
 import { expectAny } from '../util.js';
 import { ERROR, NULL } from '../value.js';
 import { iterateNs } from '../namespace.js';
-import { evaluateAsync } from './value-evaluator.js';
+import { evalValue } from './value-evaluator.js';
+import { evalReference } from './reference-evaluator.js';
+import type { EvaluationStartStep, InstructionArgument, InstructionResult, InstructionType } from './step.js';
 import type { CallInfo } from '../types.js';
 import type { Value, VFn } from '../value.js';
 import type { Control } from '../control.js';
@@ -72,7 +74,7 @@ export class AsyncEvaluator implements AsyncEvaluatorContext {
 	public async eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
 		try {
 			if (!(await this.preEval())) return NULL;
-			return await evaluateAsync(this, node, scope, callStack);
+			return await this.runEvaluationSteps(evalValue, node, scope, callStack);
 		} catch (e) {
 			if (e.pos) throw e;
 			else {
@@ -140,5 +142,31 @@ export class AsyncEvaluator implements AsyncEvaluatorContext {
 
 		this.log('block:leave', { scope: scope.name, val: v });
 		return v;
+	}
+
+	private async runEvaluationSteps<R>(
+		firstStep: EvaluationStartStep<Ast.Node, R>,
+		node: Ast.Node,
+		scope: Scope,
+		callStack: readonly CallInfo[],
+	): Promise<R> {
+		let result = firstStep(node, scope, this.log);
+		while (!result.done) {
+			const input = await this.runInstructionAsync(result.instruction, callStack);
+			result = result.then(input, this.log);
+		}
+		return result.value;
+	}
+
+	private async runInstructionAsync(
+		instruction: InstructionArgument,
+		callStack: readonly CallInfo[],
+	): Promise<InstructionResult<InstructionType>> {
+		switch (instruction.type) {
+			case 'eval': return this.eval(instruction.node, instruction.scope, callStack);
+			case 'evaluateReference': return this.runEvaluationSteps(evalReference, instruction.node, instruction.scope, callStack);
+			case 'fn': return this.fn(instruction.fn, instruction.args, callStack, instruction.pos);
+			case 'run': return this.run(instruction.program, instruction.scope, callStack);
+		}
 	}
 }

@@ -5,7 +5,9 @@ import { define, defineByDefinitionNode } from '../define.js';
 import { expectAny } from '../util.js';
 import { NULL } from '../value.js';
 import { iterateNs } from '../namespace.js';
-import { evaluateSync } from './value-evaluator.js';
+import { evalValue } from './value-evaluator.js';
+import { evalReference } from './reference-evaluator.js';
+import type { EvaluationStartStep, InstructionArgument, InstructionResult, InstructionType } from './step.js';
 import type { Ast, Scope } from '../../index.js';
 import type { Control } from '../control.js';
 import type { EventHandlerRegistry } from '../events/manager.js';
@@ -64,7 +66,7 @@ export class SyncEvaluator implements SyncEvaluatorContext {
 	@autobind
 	public eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
 		if (!this.preEval()) return NULL;
-		return evaluateSync(this, node, scope, callStack);
+		return this.runEvaluationSteps(evalValue, node, scope, callStack);
 	}
 
 	@autobind
@@ -131,5 +133,31 @@ export class SyncEvaluator implements SyncEvaluatorContext {
 
 		this.log('block:leave', { scope: scope.name, val: v });
 		return v;
+	}
+
+	private runEvaluationSteps<R>(
+		firstStep: EvaluationStartStep<Ast.Node, R>,
+		node: Ast.Node,
+		scope: Scope,
+		callStack: readonly CallInfo[],
+	): R {
+		let result = firstStep(node, scope, this.log);
+		while (!result.done) {
+			const input = this.runInstructionAsync(result.instruction, callStack);
+			result = result.then(input, this.log);
+		}
+		return result.value;
+	}
+
+	private runInstructionAsync(
+		instruction: InstructionArgument,
+		callStack: readonly CallInfo[],
+	): InstructionResult<InstructionType> {
+		switch (instruction.type) {
+			case 'eval': return this.eval(instruction.node, instruction.scope, callStack);
+			case 'evaluateReference': return this.runEvaluationSteps(evalReference, instruction.node, instruction.scope, callStack);
+			case 'fn': return this.fn(instruction.fn, instruction.args, callStack, instruction.pos);
+			case 'run': return this.run(instruction.program, instruction.scope, callStack);
+		}
 	}
 }

@@ -29,16 +29,11 @@ import { evalAnd } from './value-evaluators/and.js';
 import { evalOr } from './value-evaluators/or.js';
 import { evalIndex } from './value-evaluators/index.js';
 import { evalNever } from './value-evaluators/never.js';
-import { evaluationStepsToEvaluator } from './step.js';
 import type { Logger } from '../logger.js';
-import type { CallInfo } from '../types.js';
-import type { Control } from '../control.js';
-import type { Value } from '../value.js';
-import type { AsyncEvaluatorContext, SyncEvaluatorContext } from './context.js';
 import type { Ast, Scope } from '../../index.js';
 import type { EvaluationStepResult } from './step.js';
 
-function evalNode(node: Ast.Node, scope: Scope, logger: Logger): EvaluationStepResult {
+export function evalValue(node: Ast.Node, scope: Scope, logger: Logger): EvaluationStepResult {
 	switch (node.type) {
 		case 'call': return evalCall(node, scope);
 		case 'if': return evalIf(node, scope);
@@ -91,23 +86,3 @@ function evalNode(node: Ast.Node, scope: Scope, logger: Logger): EvaluationStepR
 		case 'attr': return evalNever();
 	}
 };
-
-const evaluator = evaluationStepsToEvaluator(evalNode);
-
-export async function evaluateAsync<T extends Ast.Node['type']>(
-	context: AsyncEvaluatorContext,
-	node: Ast.Node & { type: T },
-	scope: Scope,
-	callStack: readonly CallInfo[]
-): Promise<Value | Control> {
-	return await evaluator.evalAsync(context, node, scope, callStack);
-}
-
-export function evaluateSync<T extends Ast.Node['type']>(
-	context: SyncEvaluatorContext,
-	node: Ast.Node & { type: T },
-	scope: Scope,
-	callStack: readonly CallInfo[]
-): Value | Control {
-	return evaluator.evalSync(context, node, scope, callStack);
-}
