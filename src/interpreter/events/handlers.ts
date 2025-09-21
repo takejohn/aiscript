@@ -1,6 +1,6 @@
 import { autobind } from '../../utils/mini-autobind.js';
 
-export class HandlerRegistry {
+export class EventHandlerManager {
 	private handlers: (() => void)[] = [];
 
 	@autobind

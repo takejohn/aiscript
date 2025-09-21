@@ -13,7 +13,7 @@ import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
 import { evaluateAsync, evaluateSync } from './evaluator/value-evaluator.js';
 import { define } from './define.js';
-import { LifecycleManager } from './lifecycle/manager.js';
+import { EventManager } from './events/manager.js';
 import type { LogObject } from './logger.js';
 import type * as Ast from '../node.js';
 import type { CallInfo } from './types.js';
@@ -24,7 +24,7 @@ import type { Value, VFn } from './value.js';
 export class Interpreter {
 	public stepCount = 0;
 	public scope: Scope;
-	private lifecycleManager = new LifecycleManager();
+	private eventManager = new EventManager();
 	private irqRate: number;
 	private irqSleep: () => Promise<void>;
 
@@ -195,7 +195,7 @@ export class Interpreter {
 		if (!this.opts.err) throw e;
 		if (this.opts.abortOnError) {
 			// when abortOnError is true, error handler should be called only once
-			if (this.lifecycleManager.stop) return;
+			if (this.eventManager.stop) return;
 			this.abort();
 		}
 		if (e instanceof AiScriptError) {
@@ -337,7 +337,7 @@ export class Interpreter {
 			const result = fn.native(args, {
 				call: (fn, args) => this._fn(fn, args, [...callStack, info]),
 				topCall: this.execFn,
-				...this.lifecycleManager.registry,
+				...this.eventManager.handlerRegistry,
 			});
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			return result ?? NULL;
@@ -361,11 +361,11 @@ export class Interpreter {
 			const result = fn.nativeSync ? fn.nativeSync(args, {
 				call: (fn, args) => this._fnSync(fn, args, [...callStack, info]),
 				topCall: this.execFnSync,
-				...this.lifecycleManager.registry,
+				...this.eventManager.handlerRegistry,
 			}) : fn.native(args, {
 				call: (fn, args) => this._fn(fn, args, [...callStack, info]),
 				topCall: this.execFn,
-				...this.lifecycleManager.registry,
+				...this.eventManager.handlerRegistry,
 			});
 			if (result instanceof Promise) {
 				throw new AiScriptHostsideError('Native function must not return a Promise in sync mode.');
@@ -413,8 +413,8 @@ export class Interpreter {
 
 	@autobind
 	private async __eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		if (this.lifecycleManager.stop) return NULL;
-		if (this.lifecycleManager.pausing) await this.lifecycleManager.pausing.promise;
+		if (this.eventManager.stop) return NULL;
+		await this.eventManager.waitWhilePausing();
 		// irqRateが小数の場合は不等間隔になる
 		if (this.irqRate !== 0 && this.stepCount % this.irqRate >= this.irqRate - 1) {
 			await this.irqSleep();
@@ -429,7 +429,7 @@ export class Interpreter {
 
 	@autobind
 	private __evalSync(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		if (this.lifecycleManager.stop) return NULL;
+		if (this.eventManager.stop) return NULL;
 
 		this.stepCount++;
 		if (this.opts.maxStep && this.stepCount > this.opts.maxStep) {
@@ -493,42 +493,42 @@ export class Interpreter {
 
 	@autobind
 	public registerAbortHandler(handler: () => void): void {
-		this.lifecycleManager.abortHandlers.register(handler);
+		this.eventManager.handlerRegistry.registerAbortHandler(handler);
 	}
 	@autobind
 	public registerPauseHandler(handler: () => void): void {
-		this.lifecycleManager.pauseHandlers.register(handler);
+		this.eventManager.handlerRegistry.registerPauseHandler(handler);
 	}
 	@autobind
 	public registerUnpauseHandler(handler: () => void): void {
-		this.lifecycleManager.unpauseHandlers.register(handler);
+		this.eventManager.handlerRegistry.registerUnpauseHandler(handler);
 	}
 
 	@autobind
 	public unregisterAbortHandler(handler: () => void): void {
-		this.lifecycleManager.abortHandlers.unregister(handler);
+		this.eventManager.handlerRegistry.unregisterAbortHandler(handler);
 	}
 	@autobind
 	public unregisterPauseHandler(handler: () => void): void {
-		this.lifecycleManager.pauseHandlers.unregister(handler);
+		this.eventManager.handlerRegistry.unregisterPauseHandler(handler);
 	}
 	@autobind
 	public unregisterUnpauseHandler(handler: () => void): void {
-		this.lifecycleManager.unpauseHandlers.unregister(handler);
+		this.eventManager.handlerRegistry.unregisterUnpauseHandler(handler);
 	}
 
 	@autobind
 	public abort(): void {
-		this.lifecycleManager.abort();
+		this.eventManager.abort();
 	}
 
 	@autobind
 	public pause(): void {
-		this.lifecycleManager.pause();
+		this.eventManager.pause();
 	}
 
 	@autobind
 	public unpause(): void {
-		this.lifecycleManager.unpause();
+		this.eventManager.unpause();
 	}
 }
