@@ -15,6 +15,7 @@ import { evaluateAsync, evaluateSync } from './evaluator/value-evaluator.js';
 import { define, defineByDefinitionNode } from './define.js';
 import { EventManager } from './events/manager.js';
 import { iterateNs } from './namespace.js';
+import { IRQManager } from './irq.js';
 import type { LogObject } from './logger.js';
 import type * as Ast from '../node.js';
 import type { CallInfo } from './types.js';
@@ -26,8 +27,7 @@ export class Interpreter {
 	public stepCount = 0;
 	public scope: Scope;
 	private eventManager = new EventManager();
-	private irqRate: number;
-	private irqSleep: () => Promise<void>;
+	private irqManager: IRQManager;
 
 	private asyncEvaluatorContext: AsyncEvaluatorContext = {
 		eval: (node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> => this._eval(node, scope, callStack),
@@ -86,24 +86,7 @@ export class Interpreter {
 			}
 		};
 
-		if (!((this.opts.irqRate ?? 300) >= 0)) {
-			throw new AiScriptHostsideError(`Invalid IRQ rate (${this.opts.irqRate}): must be non-negative number`);
-		}
-		this.irqRate = this.opts.irqRate ?? 300;
-
-		const sleep = (time: number) => (
-			(): Promise<void> => new Promise(resolve => setTimeout(resolve, time))
-		);
-
-		if (typeof this.opts.irqSleep === 'function') {
-			this.irqSleep = this.opts.irqSleep;
-		} else if (this.opts.irqSleep === undefined) {
-			this.irqSleep = sleep(5);
-		} else if (this.opts.irqSleep >= 0) {
-			this.irqSleep = sleep(this.opts.irqSleep);
-		} else {
-			throw new AiScriptHostsideError('irqSleep must be a function or a positive number.');
-		}
+		this.irqManager = new IRQManager(this.opts);
 	}
 
 	@autobind
@@ -314,10 +297,7 @@ export class Interpreter {
 	private async __eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
 		if (this.eventManager.stop) return NULL;
 		await this.eventManager.waitWhilePausing();
-		// irqRateが小数の場合は不等間隔になる
-		if (this.irqRate !== 0 && this.stepCount % this.irqRate >= this.irqRate - 1) {
-			await this.irqSleep();
-		}
+		await this.irqManager.sleepIfRequired(this.stepCount);
 		this.stepCount++;
 		if (this.opts.maxStep && this.stepCount > this.opts.maxStep) {
 			throw new AiScriptRuntimeError('max step exceeded');
