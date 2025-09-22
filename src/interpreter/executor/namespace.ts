@@ -1,5 +1,5 @@
-import { AiScriptNamespaceError } from '../error.js';
-import type { Ast, Scope } from '../index.js';
+import { AiScriptNamespaceError } from '../../error.js';
+import type { Ast, Scope } from '../../index.js';
 
 export type ImmutableIdentifierDefinition = Ast.Definition & { dest: Ast.Identifier, mut: false };
 
