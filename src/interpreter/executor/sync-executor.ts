@@ -5,34 +5,34 @@ import { define, defineByDefinitionNode } from '../define.js';
 import { expectAny } from '../util.js';
 import { NULL } from '../value.js';
 import { iterateNs } from '../namespace.js';
-import { evalValue } from './value-evaluator.js';
-import { evalReference } from './reference-evaluator.js';
-import type { EvaluationStartStep, InstructionArgument, InstructionResult, InstructionType } from './step.js';
+import { evalValue } from '../evaluator/value-evaluator.js';
+import { evalReference } from '../evaluator/reference-evaluator.js';
+import type { EvaluationStartStep, InstructionArgument, InstructionResult, InstructionType } from '../evaluator/step.js';
 import type { Ast, Scope } from '../../index.js';
 import type { Control } from '../control.js';
 import type { EventHandlerRegistry } from '../events/manager.js';
 import type { LogObject } from '../logger.js';
 import type { CallInfo } from '../types.js';
 import type { Value, VFn, VNativeFn } from '../value.js';
-import type { AsyncEvaluator } from './async-evaluator.js';
+import type { AsyncExecutor } from './async-executor.js';
 
-export type SyncEvaluatorOptions = {
+export type SyncExecutorOptions = {
 	log: (type: string, params: LogObject) => void;
 	eventHandlerRegistry: EventHandlerRegistry;
 	/**
 	 * 評価を続ける場合はtrue、停止する場合はfalseを返す
 	 */
 	preEval: () => boolean;
-	asyncEvaluator: AsyncEvaluator;
+	asyncEvaluator: AsyncExecutor;
 }
 
-export class SyncEvaluator {
+export class SyncExecutor {
 	public log: (type: string, params: LogObject) => void;
 	private preEval: () => boolean;
 	private eventHandlerRegistry: EventHandlerRegistry;
-	private asyncEvaluator: AsyncEvaluator;
+	private asyncEvaluator: AsyncExecutor;
 
-	constructor(options: SyncEvaluatorOptions) {
+	constructor(options: SyncExecutorOptions) {
 		this.log = options.log;
 		this.preEval = options.preEval;
 		this.eventHandlerRegistry = options.eventHandlerRegistry;

@@ -12,8 +12,8 @@ import { NULL, FN_NATIVE, STR } from './value.js';
 import { Variable } from './variable.js';
 import { EventManager } from './events/manager.js';
 import { IRQManager } from './irq.js';
-import { AsyncEvaluator } from './evaluator/async-evaluator.js';
-import { SyncEvaluator } from './evaluator/sync-evaluator.js';
+import { AsyncExecutor } from './executor/async-executor.js';
+import { SyncExecutor } from './executor/sync-executor.js';
 import type { LogObject } from './logger.js';
 import type * as Ast from '../node.js';
 import type { JsValue } from './util.js';
@@ -24,8 +24,8 @@ export class Interpreter {
 	public scope: Scope;
 	private eventManager = new EventManager();
 	private irqManager: IRQManager;
-	private asyncEvaluator: AsyncEvaluator;
-	private syncEvaluator: SyncEvaluator;
+	private asyncEvaluator: AsyncExecutor;
+	private syncEvaluator: SyncExecutor;
 
 	constructor(
 		consts: Record<string, Value>,
@@ -72,13 +72,13 @@ export class Interpreter {
 
 		this.irqManager = new IRQManager(this.opts);
 
-		this.asyncEvaluator = new AsyncEvaluator({
+		this.asyncEvaluator = new AsyncExecutor({
 			log: this.log,
 			eventHandlerRegistry: this.eventManager.handlerRegistry,
 			preEval: this.preEval,
 			handleError: this.handleError,
 		});
-		this.syncEvaluator = new SyncEvaluator({
+		this.syncEvaluator = new SyncExecutor({
 			log: this.log,
 			eventHandlerRegistry: this.eventManager.handlerRegistry,
 			preEval: this.preEvalSync,

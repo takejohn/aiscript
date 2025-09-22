@@ -5,9 +5,9 @@ import { define, defineByDefinitionNode } from '../define.js';
 import { expectAny } from '../util.js';
 import { ERROR, NULL } from '../value.js';
 import { iterateNs } from '../namespace.js';
-import { evalValue } from './value-evaluator.js';
-import { evalReference } from './reference-evaluator.js';
-import type { EvaluationStartStep, InstructionArgument, InstructionResult, InstructionType } from './step.js';
+import { evalValue } from '../evaluator/value-evaluator.js';
+import { evalReference } from '../evaluator/reference-evaluator.js';
+import type { EvaluationStartStep, InstructionArgument, InstructionResult, InstructionType } from '../evaluator/step.js';
 import type { CallInfo } from '../types.js';
 import type { Value, VFn } from '../value.js';
 import type { Control } from '../control.js';
@@ -15,7 +15,7 @@ import type { Ast, Scope } from '../../index.js';
 import type { LogObject } from '../logger.js';
 import type { EventHandlerRegistry } from '../events/manager.js';
 
-export type AsyncEvaluatorOptions = {
+export type AsyncExecutorOptions = {
 	log: (type: string, params: LogObject) => void;
 	eventHandlerRegistry: EventHandlerRegistry;
 	/**
@@ -25,13 +25,13 @@ export type AsyncEvaluatorOptions = {
 	handleError: (e: unknown) => void;
 };
 
-export class AsyncEvaluator {
+export class AsyncExecutor {
 	public log: (type: string, params: LogObject) => void;
 	private eventHandlerRegistry: EventHandlerRegistry;
 	private preEval: () => Promise<boolean>;
 	private handleError: (e: unknown) => void;
 
-	public constructor(options: AsyncEvaluatorOptions) {
+	public constructor(options: AsyncExecutorOptions) {
 		this.log = options.log;
 		this.eventHandlerRegistry = options.eventHandlerRegistry;
 		this.preEval = options.preEval;
