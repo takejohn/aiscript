@@ -15,7 +15,6 @@ import type { LogObject } from '../logger.js';
 import type { CallInfo } from '../types.js';
 import type { Value, VFn, VNativeFn } from '../value.js';
 import type { AsyncEvaluator } from './async-evaluator.js';
-import type { SyncEvaluatorContext } from './context.js';
 
 export type SyncEvaluatorOptions = {
 	log: (type: string, params: LogObject) => void;
@@ -27,7 +26,7 @@ export type SyncEvaluatorOptions = {
 	asyncEvaluator: AsyncEvaluator;
 }
 
-export class SyncEvaluator implements SyncEvaluatorContext {
+export class SyncEvaluator {
 	public log: (type: string, params: LogObject) => void;
 	private preEval: () => boolean;
 	private eventHandlerRegistry: EventHandlerRegistry;

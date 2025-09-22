@@ -13,7 +13,6 @@ import type { Value, VFn } from '../value.js';
 import type { Control } from '../control.js';
 import type { Ast, Scope } from '../../index.js';
 import type { LogObject } from '../logger.js';
-import type { AsyncEvaluatorContext } from './context.js';
 import type { EventHandlerRegistry } from '../events/manager.js';
 
 export type AsyncEvaluatorOptions = {
@@ -26,7 +25,7 @@ export type AsyncEvaluatorOptions = {
 	handleError: (e: unknown) => void;
 };
 
-export class AsyncEvaluator implements AsyncEvaluatorContext {
+export class AsyncEvaluator {
 	public log: (type: string, params: LogObject) => void;
 	private eventHandlerRegistry: EventHandlerRegistry;
 	private preEval: () => Promise<boolean>;
