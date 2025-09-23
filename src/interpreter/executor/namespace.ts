@@ -3,41 +3,54 @@ import type { Ast, Scope } from '../../index.js';
 
 export type ImmutableIdentifierDefinition = Ast.Definition & { dest: Ast.Identifier, mut: false };
 
-export function* iterateNs(script: Ast.Node[], scope: Scope): IterableIterator<[ImmutableIdentifierDefinition, Scope]> {
-	for (const node of script) {
-		switch (node.type) {
-			case 'ns': {
-				yield* iterateNsMembers(node, scope);
-				break;
-			}
+type State = {
+	readonly members: Iterator<Ast.Namespace['members'][number]>;
+	readonly scope: Scope;
+	readonly definitions: ImmutableIdentifierDefinition[];
+};
 
-			default: {
-				// nop
-			}
+export function* iterateDefinitionsInNamespaces(script: Ast.Node[], scope: Scope): IterableIterator<[ImmutableIdentifierDefinition, Scope]> {
+	for (const node of script) {
+		if (node.type === 'ns') {
+			yield* iterateDefinitionsInNamespace(node, scope.createChildNamespaceScope(node.name));
 		}
 	}
 }
 
-function* iterateNsMembers(ns: Ast.Namespace, scope: Scope): IterableIterator<[ImmutableIdentifierDefinition, Scope]> {
-	const nsScope = scope.createChildNamespaceScope(ns.name);
+function* iterateDefinitionsInNamespace(ns: Ast.Namespace, nsScope: Scope): IterableIterator<[ImmutableIdentifierDefinition, Scope]> {
+	const stack: State[] = [{ members: ns.members.values(), scope: nsScope, definitions: [] }];
+	while (stack.length > 0) {
+		const { members, scope, definitions } = stack.at(-1)!;
+		const memberResult = members.next();
 
-	yield* iterateNs(ns.members, nsScope);
+		if (memberResult.done) {
+			for (const definition of definitions) {
+				yield [definition, scope];
+			}
+			stack.pop();
+			continue;
+		}
 
-	for (const node of ns.members) {
-		switch (node.type) {
-			case 'def': {
-				assertImmutableIdentifierDefinition(node);
-				yield [node, nsScope];
+		const member = memberResult.value;
+		switch (member.type) {
+			case 'ns': {
+				stack.push({
+					members: member.members.values(),
+					scope: scope.createChildNamespaceScope(member.name),
+					definitions: [],
+				});
 				break;
 			}
 
-			case 'ns': {
-				break; // nop
+			case 'def': {
+				assertImmutableIdentifierDefinition(member);
+				definitions.push(member);
+				break;
 			}
 
 			default: {
 				// exhaustiveness check
-				const n: never = node;
+				const n: never = member;
 				const nd = n as Ast.Node;
 				throw new AiScriptNamespaceError('invalid ns member type: ' + nd.type, nd.loc.start);
 			}

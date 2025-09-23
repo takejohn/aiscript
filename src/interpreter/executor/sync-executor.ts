@@ -6,7 +6,7 @@ import { expectAny } from '../util.js';
 import { NULL } from '../value.js';
 import { evalValue } from '../evaluator/value-evaluator.js';
 import { evalReference } from '../evaluator/reference-evaluator.js';
-import { iterateNs } from './namespace.js';
+import { iterateDefinitionsInNamespaces } from './namespace.js';
 import type { EvaluationStartStep, InstructionArgument, InstructionResult, InstructionType } from '../evaluator/step.js';
 import type { Ast, Scope } from '../../index.js';
 import type { Control } from '../control.js';
@@ -55,7 +55,7 @@ export class SyncExecutor {
 
 	@autobind
 	private collectNs(script: Ast.Node[], scope: Scope): void {
-		for (const [node, nsScope] of iterateNs(script, scope)) {
+		for (const [node, nsScope] of iterateDefinitionsInNamespaces(script, scope)) {
 			const value = this.eval(node.expr, nsScope, []);
 			assertValue(value);
 			defineByDefinitionNode(node, nsScope, value);
