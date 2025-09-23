@@ -6,7 +6,7 @@ export type ImmutableIdentifierDefinition = Ast.Definition & { dest: Ast.Identif
 type State = {
 	readonly members: Iterator<Ast.Namespace['members'][number]>;
 	readonly scope: Scope;
-	readonly definitions: ImmutableIdentifierDefinition[];
+	readonly definitions: Ast.Definition[];
 };
 
 export function* iterateDefinitionsInNamespaces(script: Ast.Node[], scope: Scope): IterableIterator<[ImmutableIdentifierDefinition, Scope]> {
@@ -25,6 +25,7 @@ function* iterateDefinitionsInNamespace(ns: Ast.Namespace, nsScope: Scope): Iter
 
 		if (memberResult.done) {
 			for (const definition of definitions) {
+				assertImmutableIdentifierDefinition(definition);
 				yield [definition, scope];
 			}
 			stack.pop();
@@ -43,7 +44,6 @@ function* iterateDefinitionsInNamespace(ns: Ast.Namespace, nsScope: Scope): Iter
 			}
 
 			case 'def': {
-				assertImmutableIdentifierDefinition(member);
 				definitions.push(member);
 				break;
 			}
