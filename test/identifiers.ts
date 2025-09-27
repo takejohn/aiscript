@@ -287,6 +287,7 @@ describe.each(
 			eq(res, expected);
 		} else {
 			expect(() => parser.parse(sampleCode(word, word))).toThrow(AiScriptSyntaxError);
+			await Promise.resolve(); // https://github.com/vitest-dev/vitest/issues/4750
 		}
 	});
 
