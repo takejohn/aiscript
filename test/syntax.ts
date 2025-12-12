@@ -1,9 +1,9 @@
 import * as assert from 'assert';
 import { describe, expect, test } from 'vitest';
-import { utils } from '../src';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
-import { AiScriptRuntimeError, AiScriptUnexpectedEOFError } from '../src/error';
-import { exe, getMeta, eq } from './testutils';
+import { utils } from '../src/index.js';
+import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
+import { AiScriptRuntimeError, AiScriptUnexpectedEOFError } from '../src/error.js';
+import { exe, getMeta, eq } from './testutils.js';
 
 /*
  * General

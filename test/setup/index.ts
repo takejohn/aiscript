@@ -1,5 +1,5 @@
-import { expect } from "vitest";
-import { utils, values } from "../../src";
+import { expect } from 'vitest';
+import { utils, values } from '../../src/index.js';
 
 const pickTypeAndValue = (value: object): { type?: unknown, value?: unknown } => {
 	const result: { type?: unknown, value?: unknown } = {};

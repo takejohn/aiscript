@@ -1,5 +1,5 @@
 import 'vitest';
-import { values } from '../../src';
+import type { values } from './src/index.js';
 
 interface ValueMatchers<R> {
 	/**
