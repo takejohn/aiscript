@@ -13,7 +13,7 @@ describe('return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 		await assert.rejects(() => exe('return 1'));
 	});
 
@@ -26,7 +26,7 @@ describe('return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 		await assert.rejects(() => exe('<: eval { return 1 }'));
 	});
 
@@ -38,7 +38,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, BOOL(true));
+			expect(res).toEqualValueOf(BOOL(true));
 			await assert.rejects(() => exe('<: if eval { return true } {}'));
 		});
 
@@ -51,7 +51,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('<: if true { return 1 }'));
 		});
 
@@ -62,7 +62,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, BOOL(true));
+			expect(res).toEqualValueOf(BOOL(true));
 			await assert.rejects(() => exe('<: if false {} elif eval { return true } {}'));
 		});
 
@@ -76,7 +76,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('<: if false {} elif true eval { return true }'));
 		});
 
@@ -90,7 +90,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('<: if false {} else eval { return true }'));
 		});
 	});
@@ -103,7 +103,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('<: match eval { return 1 } {}'));
 		});
 
@@ -118,7 +118,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(0));
+			expect(res).toEqualValueOf(NUM(0));
 			await assert.rejects(() => exe('<: match 0 { case eval { return 0 } => {} }'))
 		});
 
@@ -133,7 +133,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('<: match 0 { case 0 => { return 1 } }'))
 		});
 
@@ -148,7 +148,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('<: match 0 { default => { return 1 } }'))
 		});
 	});
@@ -161,7 +161,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('<: eval { return 1 } + 2'));
 		});
 
@@ -172,7 +172,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(2));
+			expect(res).toEqualValueOf(NUM(2));
 			await assert.rejects(() => exe('<: 1 + eval { return 2 }'));
 		});
 	});
@@ -185,7 +185,7 @@ describe('return', () => {
 			}
 			f()('Hi')
 			`);
-			eq(res, STR('Hi'));
+			expect(res).toEqualValueOf(STR('Hi'));
 			await assert.rejects(() => exe(`eval { return print }('Hello, world!')`));
 		});
 
@@ -196,7 +196,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, STR('Hello, world!'));
+			expect(res).toEqualValueOf(STR('Hello, world!'));
 			await assert.rejects(() => exe(`print(eval { return 'Hello, world' })`))
 		});
 	});
@@ -209,7 +209,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('for eval { return 1 } {}'));
 		});
 
@@ -220,7 +220,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('for let i = eval { return 1 }, 2 {}'));
 		});
 
@@ -231,7 +231,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('for let i = 0, eval { return 1 } {}'));
 		});
 
@@ -244,7 +244,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('for 1 { return 1 }'));
 		})
 	});
@@ -257,7 +257,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('each let v, [eval { return 1 }] {}'));
 		});
 
@@ -270,7 +270,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('each let v, [0] { return 1 }'));
 		});
 	});
@@ -284,7 +284,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('let a = null; a = eval { return 1 }'));
 		});
 
@@ -296,7 +296,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, ARR([NULL]));
+			expect(res).toEqualValueOf(ARR([NULL]));
 			await assert.rejects(() => exe('let a = [null]; eval { return a }[0] = 1'));
 		});
 
@@ -308,7 +308,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(0));
+			expect(res).toEqualValueOf(NUM(0));
 			await assert.rejects(() => exe('let a = [null]; a[eval { return 0 }] = 1'));
 		});
 
@@ -320,7 +320,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, OBJ(new Map()));
+			expect(res).toEqualValueOf(OBJ(new Map()));
 			await assert.rejects(() => exe('let o = {}; eval { return o }.p = 1'));
 		});
 
@@ -332,7 +332,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, OBJ(new Map()));
+			expect(res).toEqualValueOf(OBJ(new Map()));
 			await assert.rejects(() => exe('let o = {}; [eval { return o }.p] = [1]'));
 		});
 
@@ -344,7 +344,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, OBJ(new Map()));
+			expect(res).toEqualValueOf(OBJ(new Map()));
 			await assert.rejects(() => exe('let o = {}; { a: eval { return o }.p } = { a: 1 }'));
 		});
 	});
@@ -358,7 +358,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(0));
+			expect(res).toEqualValueOf(NUM(0));
 			await assert.rejects(() => exe('let a = [0]; a[eval { return 0 }] += 1'));
 		});
 
@@ -370,7 +370,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('let a = 0; a += eval { return 1 }'));
 		});
 	});
@@ -384,7 +384,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(0));
+			expect(res).toEqualValueOf(NUM(0));
 			await assert.rejects(() => exe('let a = [0]; a[eval { return 0 }] -= 1'));
 		});
 
@@ -396,7 +396,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('let a = 0; a -= eval { return 1 }'));
 		});
 	});
@@ -408,7 +408,7 @@ describe('return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 		await assert.rejects(() => exe('<: [eval { return 1 }]'));
 	});
 
@@ -421,7 +421,7 @@ describe('return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 		await assert.rejects(() => exe('<: { p: eval { return 1 } }'));
 	});
 
@@ -434,7 +434,7 @@ describe('return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 		await assert.rejects(() => exe('<: { p: eval { return 1 } }.p'));
 	});
 
@@ -446,7 +446,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('<: [eval { return 1 }][0]'));
 		});
 
@@ -457,7 +457,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(0));
+			expect(res).toEqualValueOf(NUM(0));
 			await assert.rejects(() => exe('<: [0][eval { return 1 }]'));
 		});
 	});
@@ -469,7 +469,7 @@ describe('return', () => {
 		}
 		<: f()
 		`);
-		eq(res, BOOL(true));
+		expect(res).toEqualValueOf(BOOL(true));
 		await assert.rejects(() => exe('<: !eval { return true }'));
 	});
 
@@ -480,7 +480,7 @@ describe('return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 		await assert.rejects(() => exe('<: @(x = eval { return 1 }){}'), errors.AiScriptSyntaxError);
 		await assert.rejects(() => exe('<: @(a = @(b = eval { return 0 }){}){}'), errors.AiScriptSyntaxError);
 	});
@@ -492,7 +492,7 @@ describe('return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 		await assert.rejects(() => exe('<: `{eval {return 1}}`'));
 	});
 
@@ -503,7 +503,7 @@ describe('return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 		await assert.rejects(() => exe('return eval { return 1 } + 2'));
 	});
 
@@ -517,7 +517,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('invalid', async () => {
@@ -537,7 +537,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('eval { return 1 } && false'));
 		});
 
@@ -548,7 +548,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('true && eval { return 1 }'));
 		});
 	});
@@ -561,7 +561,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('eval { return 1 } || false'));
 		});
 
@@ -572,7 +572,7 @@ describe('return', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 			await assert.rejects(() => exe('false || eval { return 1 }'));
 		});
 	});
@@ -588,7 +588,7 @@ describe('break', () => {
 		}
 		<: x
 		`);
-		eq(res, NUM(0));
+		expect(res).toEqualValueOf(NUM(0));
 		await assert.rejects(() => exe('break'));
 		await assert.rejects(() => exe('@() { break }()'));
 	});
@@ -604,7 +604,7 @@ describe('break', () => {
 		}
 		<: x
 		`);
-		eq(res, NUM(0));
+		expect(res).toEqualValueOf(NUM(0));
 		await assert.rejects(() => exe('<: eval { break }'));
 	});
 
@@ -619,7 +619,7 @@ describe('break', () => {
 		}
 		<: x
 		`);
-		eq(res, NUM(0));
+		expect(res).toEqualValueOf(NUM(0));
 		await assert.rejects(() => exe('<: if true { break }'));
 	});
 
@@ -634,7 +634,7 @@ describe('break', () => {
 		}
 		<: x
 		`);
-		eq(res, NUM(0));
+		expect(res).toEqualValueOf(NUM(0));
 		await assert.rejects(() => exe('<: if true { break }'));
 	});
 
@@ -752,7 +752,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner for', async () => {
@@ -767,7 +767,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner loop', async () => {
@@ -782,7 +782,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner do-while', async () => {
@@ -797,7 +797,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner while', async () => {
@@ -812,7 +812,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 
@@ -829,7 +829,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner for', async () => {
@@ -844,7 +844,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner loop', async () => {
@@ -859,7 +859,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner do-while', async () => {
@@ -874,7 +874,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner while', async () => {
@@ -889,7 +889,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 
@@ -906,7 +906,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner for', async () => {
@@ -921,7 +921,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner loop', async () => {
@@ -936,7 +936,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner do-while', async () => {
@@ -951,7 +951,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner while', async () => {
@@ -966,7 +966,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 
@@ -983,7 +983,7 @@ describe('break', () => {
 			} while false
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner for', async () => {
@@ -998,7 +998,7 @@ describe('break', () => {
 			} while false
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner loop', async () => {
@@ -1013,7 +1013,7 @@ describe('break', () => {
 			} while false
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner do-while', async () => {
@@ -1028,7 +1028,7 @@ describe('break', () => {
 			} while false
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner while', async () => {
@@ -1043,7 +1043,7 @@ describe('break', () => {
 			} while false
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 
@@ -1060,7 +1060,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner for', async () => {
@@ -1075,7 +1075,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner loop', async () => {
@@ -1090,7 +1090,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner do-while', async () => {
@@ -1105,7 +1105,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner while', async () => {
@@ -1120,7 +1120,7 @@ describe('break', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 
@@ -1132,7 +1132,7 @@ describe('break', () => {
 				2
 			}
 			`);
-			eq(res, NULL);
+			expect(res).toEqualValueOf(NULL);
 		});
 
 		test.concurrent('break with value', async () => {
@@ -1142,7 +1142,7 @@ describe('break', () => {
 				2
 			}
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 
@@ -1156,7 +1156,7 @@ describe('break', () => {
 				}
 			}
 			`);
-			eq(res, NULL);
+			expect(res).toEqualValueOf(NULL);
 		});
 
 		test.concurrent('break with value', async () => {
@@ -1168,7 +1168,7 @@ describe('break', () => {
 				}
 			}
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 
@@ -1180,7 +1180,7 @@ describe('break', () => {
 				2
 			}
 			`);
-			eq(res, NULL);
+			expect(res).toEqualValueOf(NULL);
 		});
 
 		test.concurrent('break with value', async () => {
@@ -1190,7 +1190,7 @@ describe('break', () => {
 				2
 			}
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner while', async () => {
@@ -1201,7 +1201,7 @@ describe('break', () => {
 					}
 			}
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 });
@@ -1216,7 +1216,7 @@ describe('continue', () => {
 		}
 		<: x
 		`);
-		eq(res, NUM(0));
+		expect(res).toEqualValueOf(NUM(0));
 		await assert.rejects(() => exe('continue'));
 		await assert.rejects(() => exe('@() { continue }()'));
 	});
@@ -1232,7 +1232,7 @@ describe('continue', () => {
 		}
 		<: x
 		`);
-		eq(res, NUM(0));
+		expect(res).toEqualValueOf(NUM(0));
 		await assert.rejects(() => exe('<: eval { continue }'));
 	});
 
@@ -1247,7 +1247,7 @@ describe('continue', () => {
 		}
 		<: x
 		`);
-		eq(res, NUM(0));
+		expect(res).toEqualValueOf(NUM(0));
 		await assert.rejects(() => exe('<: if true { continue }'));
 	});
 
@@ -1262,7 +1262,7 @@ describe('continue', () => {
 		}
 		<: x
 		`);
-		eq(res, NUM(0));
+		expect(res).toEqualValueOf(NUM(0));
 		await assert.rejects(() => exe('<: if true { continue }'));
 	});
 
@@ -1297,7 +1297,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner for', async () => {
@@ -1312,7 +1312,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner loop', async () => {
@@ -1327,7 +1327,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner do-while', async () => {
@@ -1342,7 +1342,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner while', async () => {
@@ -1357,7 +1357,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 
@@ -1404,7 +1404,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner for', async () => {
@@ -1419,7 +1419,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner loop', async () => {
@@ -1434,7 +1434,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner do-while', async () => {
@@ -1449,7 +1449,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner while', async () => {
@@ -1464,7 +1464,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 
@@ -1481,7 +1481,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner for', async () => {
@@ -1496,7 +1496,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner loop', async () => {
@@ -1511,7 +1511,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner do-while', async () => {
@@ -1526,7 +1526,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('inner while', async () => {
@@ -1541,7 +1541,7 @@ describe('continue', () => {
 			}
 			<: x
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 });

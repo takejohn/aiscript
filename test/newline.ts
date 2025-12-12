@@ -1,4 +1,4 @@
-import { describe, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { utils } from '../src';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
 import { exe, getMeta, eq } from './testutils';
@@ -11,7 +11,7 @@ describe('empty lines', () => {
 				// comment
 			}
 			`);
-			eq(res, NULL);
+			expect(res).toEqualValueOf(NULL);
 		});
 
 		test.concurrent('empty line before case', async () => {
@@ -21,7 +21,7 @@ describe('empty lines', () => {
 				case 1 => 1
 			}
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('empty line after case', async () => {
@@ -31,7 +31,7 @@ describe('empty lines', () => {
 				// comment
 			}
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('empty line before default', async () => {
@@ -41,7 +41,7 @@ describe('empty lines', () => {
 				default => 1
 			}
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('empty line after default', async () => {
@@ -51,7 +51,7 @@ describe('empty lines', () => {
 				// comment
 			}
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
     });
 
@@ -65,7 +65,7 @@ describe('empty lines', () => {
 				// comment
 			)
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('empty line before', async () => {
@@ -78,7 +78,7 @@ describe('empty lines', () => {
 				1
 			)
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('empty line after', async () => {
@@ -91,7 +91,7 @@ describe('empty lines', () => {
 				// comment
 			)
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
     });
 
@@ -107,7 +107,7 @@ describe('empty lines', () => {
                 }
                 <: f(1)
                 `);
-                eq(res, NUM(1));
+                expect(res).toEqualValueOf(NUM(1));
             });
 
             test.concurrent('empty line after', async () => {
@@ -120,7 +120,7 @@ describe('empty lines', () => {
                 }
                 <: f(1)
                 `);
-                eq(res, NUM(1));
+                expect(res).toEqualValueOf(NUM(1));
             });
         });
 
@@ -135,7 +135,7 @@ describe('empty lines', () => {
                 }
                 <: f(1)
                 `);
-                eq(res, NUM(1));
+                expect(res).toEqualValueOf(NUM(1));
             });
 
             test.concurrent('empty line after', async () => {
@@ -148,7 +148,7 @@ describe('empty lines', () => {
                 }
                 <: f(1)
                 `);
-                eq(res, NUM(1));
+                expect(res).toEqualValueOf(NUM(1));
             });
         });
     });
@@ -163,7 +163,7 @@ describe('empty lines', () => {
 			}
 			<: f()
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('empty line before', async () => {
@@ -176,7 +176,7 @@ describe('empty lines', () => {
 			}
 			<: f(1)
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent('empty line after', async () => {
@@ -189,7 +189,7 @@ describe('empty lines', () => {
 			}
 			<: f(1)
 			`);
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
     });
 
@@ -204,7 +204,7 @@ describe('empty lines', () => {
                 2
             }
             `);
-            eq(res, NUM(1));
+            expect(res).toEqualValueOf(NUM(1));
         });
 
         test.concurrent('empty line between if ~ elif ~ elif', async () => {
@@ -221,7 +221,7 @@ describe('empty lines', () => {
                 3
             }
             `);
-            eq(res, NUM(1));
+            expect(res).toEqualValueOf(NUM(1));
         });
 
         test.concurrent('empty line between if ~ else', async () => {
@@ -234,7 +234,7 @@ describe('empty lines', () => {
                 2
             }
             `);
-            eq(res, NUM(1));
+            expect(res).toEqualValueOf(NUM(1));
         });
 
         test.concurrent('empty line between if ~ elif ~ else', async () => {
@@ -251,7 +251,7 @@ describe('empty lines', () => {
                 3
             }
             `);
-            eq(res, NUM(1));
+            expect(res).toEqualValueOf(NUM(1));
         });
     });
 
@@ -262,7 +262,7 @@ describe('empty lines', () => {
             // comment
             true
             `);
-            eq(res, BOOL(false));
+            expect(res).toEqualValueOf(BOOL(false));
         });
     });
 
@@ -273,7 +273,7 @@ describe('empty lines', () => {
             // comment
             * 3
             `);
-            eq(res, NUM(6));
+            expect(res).toEqualValueOf(NUM(6));
         });
     });
 
@@ -284,7 +284,7 @@ describe('empty lines', () => {
             // comment
             3
             `);
-            eq(res, NUM(6));
+            expect(res).toEqualValueOf(NUM(6));
         });
     });
 
@@ -296,7 +296,7 @@ describe('empty lines', () => {
             1
             <: a
             `);
-            eq(res, NUM(1));
+            expect(res).toEqualValueOf(NUM(1));
         });
     });
 
@@ -308,7 +308,7 @@ describe('empty lines', () => {
             let a = 1
             <: a
             `);
-            eq(res, NUM(1));
+            expect(res).toEqualValueOf(NUM(1));
         });
     });
 
@@ -319,7 +319,7 @@ describe('empty lines', () => {
                 // comment
             }
             `);
-            eq(res, OBJ(new Map()));
+            expect(res).toEqualValueOf(OBJ(new Map()));
         });
 
         test.concurrent('empty line before', async () => {
@@ -330,7 +330,7 @@ describe('empty lines', () => {
             }
             <: x.a
             `);
-            eq(res, NUM(1));
+            expect(res).toEqualValueOf(NUM(1));
         });
 
         test.concurrent('empty line after', async () => {
@@ -341,7 +341,7 @@ describe('empty lines', () => {
             }
             <: x.a
             `);
-            eq(res, NUM(1));
+            expect(res).toEqualValueOf(NUM(1));
         });
     });
 
@@ -352,7 +352,7 @@ describe('empty lines', () => {
                 // comment
             ]
             `);
-            eq(res, ARR([]));
+            expect(res).toEqualValueOf(ARR([]));
         });
 
         test.concurrent('empty line before', async () => {
@@ -363,7 +363,7 @@ describe('empty lines', () => {
             ]
             <: x[0]
             `);
-            eq(res, NUM(1));
+            expect(res).toEqualValueOf(NUM(1));
         });
 
         test.concurrent('empty line after', async () => {
@@ -374,7 +374,7 @@ describe('empty lines', () => {
             ]
             <: x[0]
             `);
-            eq(res, NUM(1));
+            expect(res).toEqualValueOf(NUM(1));
         });
     });
 });

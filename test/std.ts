@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { describe, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { utils } from '../src';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
 import { exe, eq } from './testutils';
@@ -7,30 +7,30 @@ import { exe, eq } from './testutils';
 
 describe('Core', () => {
 	test.concurrent('range', async () => {
-		eq(await exe('<: Core:range(1, 10)'), ARR([NUM(1), NUM(2), NUM(3), NUM(4), NUM(5), NUM(6), NUM(7), NUM(8), NUM(9), NUM(10)]));
-		eq(await exe('<: Core:range(1, 1)'), ARR([NUM(1)]));
-		eq(await exe('<: Core:range(9, 7)'), ARR([NUM(9), NUM(8), NUM(7)]));
+		expect(await exe('<: Core:range(1, 10)')).toEqualValueOf(ARR([NUM(1), NUM(2), NUM(3), NUM(4), NUM(5), NUM(6), NUM(7), NUM(8), NUM(9), NUM(10)]));
+		expect(await exe('<: Core:range(1, 1)')).toEqualValueOf(ARR([NUM(1)]));
+		expect(await exe('<: Core:range(9, 7)')).toEqualValueOf(ARR([NUM(9), NUM(8), NUM(7)]));
 	});
 
 	test.concurrent('to_str', async () => {
-		eq(await exe('<: Core:to_str("abc")'), STR('abc'));
-		eq(await exe('<: Core:to_str(123)'), STR('123'));
-		eq(await exe('<: Core:to_str(true)'), STR('true'));
-		eq(await exe('<: Core:to_str(false)'), STR('false'));
-		eq(await exe('<: Core:to_str(null)'), STR('null'));
-		eq(await exe('<: Core:to_str({ a: "abc", b: 1234 })'), STR('{ a: "abc", b: 1234 }'));
-		eq(await exe('<: Core:to_str([ true, 123, null ])'), STR('[ true, 123, null ]'));
-		eq(await exe('<: Core:to_str(@( a, b, c ) {})'), STR('@( a, b, c ) { ... }'));
-		eq(await exe(`
+		expect(await exe('<: Core:to_str("abc")')).toEqualValueOf(STR('abc'));
+		expect(await exe('<: Core:to_str(123)')).toEqualValueOf(STR('123'));
+		expect(await exe('<: Core:to_str(true)')).toEqualValueOf(STR('true'));
+		expect(await exe('<: Core:to_str(false)')).toEqualValueOf(STR('false'));
+		expect(await exe('<: Core:to_str(null)')).toEqualValueOf(STR('null'));
+		expect(await exe('<: Core:to_str({ a: "abc", b: 1234 })')).toEqualValueOf(STR('{ a: "abc", b: 1234 }'));
+		expect(await exe('<: Core:to_str([ true, 123, null ])')).toEqualValueOf(STR('[ true, 123, null ]'));
+		expect(await exe('<: Core:to_str(@( a, b, c ) {})')).toEqualValueOf(STR('@( a, b, c ) { ... }'));
+		expect(await exe(`
 			let arr = []
 			arr.push(arr)
 			<: Core:to_str(arr)
-		`), STR('[ ... ]'));
-		eq(await exe(`
+		`)).toEqualValueOf(STR('[ ... ]'));
+		expect(await exe(`
 			let arr = []
 			arr.push({ value: arr })
 			<: Core:to_str(arr)
-		`), STR('[ { value: ... } ]'));
+		`)).toEqualValueOf(STR('[ { value: ... } ]'));
 	});
 
 	test.concurrent('abort', async () => {
@@ -43,49 +43,49 @@ describe('Core', () => {
 
 describe('Arr', () => {
 	test.concurrent('create', async () => {
-		eq(await exe("<: Arr:create(0)"), ARR([]));
-		eq(await exe("<: Arr:create(3)"), ARR([NULL, NULL, NULL]));
-		eq(await exe("<: Arr:create(3, 1)"), ARR([NUM(1), NUM(1), NUM(1)]));
+		expect(await exe("<: Arr:create(0)")).toEqualValueOf(ARR([]));
+		expect(await exe("<: Arr:create(3)")).toEqualValueOf(ARR([NULL, NULL, NULL]));
+		expect(await exe("<: Arr:create(3, 1)")).toEqualValueOf(ARR([NUM(1), NUM(1), NUM(1)]));
 	});
 });
 
 describe('Math', () => {
 	test.concurrent('trig', async () => {
-		eq(await exe("<: Math:sin(Math:PI / 2)"), NUM(1));
-		eq(await exe("<: Math:sin(0 - (Math:PI / 2))"), NUM(-1));
-		eq(await exe("<: Math:sin(Math:PI / 4) * Math:cos(Math:PI / 4)"), NUM(0.5));
+		expect(await exe("<: Math:sin(Math:PI / 2)")).toEqualValueOf(NUM(1));
+		expect(await exe("<: Math:sin(0 - (Math:PI / 2))")).toEqualValueOf(NUM(-1));
+		expect(await exe("<: Math:sin(Math:PI / 4) * Math:cos(Math:PI / 4)")).toEqualValueOf(NUM(0.5));
 	});
 
 	test.concurrent('abs', async () => {
-		eq(await exe("<: Math:abs(1 - 6)"), NUM(5));
+		expect(await exe("<: Math:abs(1 - 6)")).toEqualValueOf(NUM(5));
 	});
 
 	test.concurrent('pow and sqrt', async () => {
-		eq(await exe("<: Math:sqrt(3^2 + 4^2)"), NUM(5));
+		expect(await exe("<: Math:sqrt(3^2 + 4^2)")).toEqualValueOf(NUM(5));
 	});
 
 	test.concurrent('round', async () => {
-		eq(await exe("<: Math:round(3.14)"), NUM(3));
-		eq(await exe("<: Math:round(-1.414213)"), NUM(-1));
+		expect(await exe("<: Math:round(3.14)")).toEqualValueOf(NUM(3));
+		expect(await exe("<: Math:round(-1.414213)")).toEqualValueOf(NUM(-1));
 	});
 
 	test.concurrent('ceil', async () => {
-		eq(await exe("<: Math:ceil(2.71828)"), NUM(3));
-		eq(await exe("<: Math:ceil(0 - Math:PI)"), NUM(-3));
-		eq(await exe("<: Math:ceil(1 / Math:Infinity)"), NUM(0));
+		expect(await exe("<: Math:ceil(2.71828)")).toEqualValueOf(NUM(3));
+		expect(await exe("<: Math:ceil(0 - Math:PI)")).toEqualValueOf(NUM(-3));
+		expect(await exe("<: Math:ceil(1 / Math:Infinity)")).toEqualValueOf(NUM(0));
 	});
 
 	test.concurrent('floor', async () => {
-		eq(await exe("<: Math:floor(23.14069)"), NUM(23));
-		eq(await exe("<: Math:floor(Math:Infinity / 0)"), NUM(Infinity));
+		expect(await exe("<: Math:floor(23.14069)")).toEqualValueOf(NUM(23));
+		expect(await exe("<: Math:floor(Math:Infinity / 0)")).toEqualValueOf(NUM(Infinity));
 	});
 
 	test.concurrent('min', async () => {
-		eq(await exe("<: Math:min(2, 3)"), NUM(2));
+		expect(await exe("<: Math:min(2, 3)")).toEqualValueOf(NUM(2));
 	});
 
 	test.concurrent('max', async () => {
-		eq(await exe("<: Math:max(-2, -3)"), NUM(-2));
+		expect(await exe("<: Math:max(-2, -3)")).toEqualValueOf(NUM(-2));
 	});
 	
 	/* flaky
@@ -125,7 +125,7 @@ describe('Math', () => {
 	*/
 
 	test.concurrent('rnd with arg', async () => {
-		eq(await exe("<: Math:rnd(1, 1.5)"), NUM(1));
+		expect(await exe("<: Math:rnd(1, 1.5)")).toEqualValueOf(NUM(1));
 	});
 
 	test.concurrent('gen_rng', async () => {
@@ -154,7 +154,7 @@ describe('Math', () => {
 			test(seed1, seed2)
 		]
 		`)
-		eq(res, ARR([BOOL(true), BOOL(true)]));
+		expect(res).toEqualValueOf(ARR([BOOL(true), BOOL(true)]));
 	});
 });
 
@@ -165,7 +165,7 @@ describe('Obj', () => {
 
 		<: Obj:keys(o)
 		`);
-		eq(res, ARR([STR('a'), STR('b'), STR('c')]));
+		expect(res).toEqualValueOf(ARR([STR('a'), STR('b'), STR('c')]));
 	});
 
 	test.concurrent('vals', async () => {
@@ -174,7 +174,7 @@ describe('Obj', () => {
 
 		<: Obj:vals(o)
 		`);
-		eq(res, ARR([NULL, NUM(24), STR('hoge'), ARR([]), OBJ(new Map([]))]));
+		expect(res).toEqualValueOf(ARR([NULL, NUM(24), STR('hoge'), ARR([]), OBJ(new Map([]))]));
 	});
 
 	test.concurrent('kvs', async () => {
@@ -183,7 +183,7 @@ describe('Obj', () => {
 
 		<: Obj:kvs(o)
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([STR('a'), NUM(1)]),
 			ARR([STR('b'), NUM(2)]),
 			ARR([STR('c'), NUM(3)])
@@ -197,7 +197,7 @@ describe('Obj', () => {
 
 		<: Obj:merge(o1, o2)
 		`);
-		eq(res, utils.jsToVal({ a: 1, b: 3, c: 4}));
+		expect(res).toEqualValueOf(utils.jsToVal({ a: 1, b: 3, c: 4}));
 	});
 
 	test.concurrent('pick', async () => {
@@ -206,7 +206,7 @@ describe('Obj', () => {
 
 		<: Obj:pick(o, ['b', 'd'])
 		`);
-		eq(res, utils.jsToVal({ b: 2, d: null }));
+		expect(res).toEqualValueOf(utils.jsToVal({ b: 2, d: null }));
 	});
 
 	test.concurrent('from_kvs', async () => {
@@ -215,7 +215,7 @@ describe('Obj', () => {
 
 		<: Obj:from_kvs(kvs)
 		`);
-		eq(res, utils.jsToVal({ a: 1, b: 2, c: 3 }));
+		expect(res).toEqualValueOf(utils.jsToVal({ a: 1, b: 2, c: 3 }));
 	});
 });
 
@@ -224,40 +224,40 @@ describe('Str', () => {
 		const res = await exe(`
 		<: Str:lf
 		`);
-		eq(res, STR('\n'));
+		expect(res).toEqualValueOf(STR('\n'));
 	});
 
 	test.concurrent('from_codepoint', async () => {
 		const res = await exe(`
 		<: Str:from_codepoint(65)
 		`);
-		eq(res, STR('A'));
+		expect(res).toEqualValueOf(STR('A'));
 	});
 
 	test.concurrent('from_unicode_codepoints', async () => {
 		const res = await exe(`
 		<: Str:from_unicode_codepoints([171581, 128073, 127999, 128104, 8205, 128102])
 		`);
-		eq(res, STR('𩸽👉🏿👨‍👦'));
+		expect(res).toEqualValueOf(STR('𩸽👉🏿👨‍👦'));
 	});
 
 	test.concurrent('from_utf8_bytes', async () => {
 		const res = await exe(`
 		<: Str:from_utf8_bytes([240, 169, 184, 189, 240, 159, 145, 137, 240, 159, 143, 191, 240, 159, 145, 168, 226, 128, 141, 240, 159, 145, 166])
 		`);
-		eq(res, STR('𩸽👉🏿👨‍👦'));
+		expect(res).toEqualValueOf(STR('𩸽👉🏿👨‍👦'));
 	});
 
 	test.concurrent('charcode_at', async () => {
 		let res = await exe(`
 		<: "aiscript".split().map(@(x, _) { x.charcode_at(0) })
 		`);
-		eq(res, ARR([97, 105, 115, 99, 114, 105, 112, 116].map(x => NUM(x))));
+		expect(res).toEqualValueOf(ARR([97, 105, 115, 99, 114, 105, 112, 116].map(x => NUM(x))));
 
 		res = await exe(`
 		<: "".charcode_at(0)
 		`);
-		eq(res, NULL);
+		expect(res).toEqualValueOf(NULL);
 	});
 });
 
@@ -266,39 +266,36 @@ describe('Uri', () => {
 		const res = await exe(`
 		<: Uri:encode_full("https://example.com/?q=あいちゃん")
 		`);
-		eq(res, STR('https://example.com/?q=%E3%81%82%E3%81%84%E3%81%A1%E3%82%83%E3%82%93'));
+		expect(res).toEqualValueOf(STR('https://example.com/?q=%E3%81%82%E3%81%84%E3%81%A1%E3%82%83%E3%82%93'));
 	});
 
 	test.concurrent('encode_component', async () => {
 		const res = await exe(`
 		<: Uri:encode_component("https://example.com/?q=あいちゃん")
 		`);
-		eq(res, STR('https%3A%2F%2Fexample.com%2F%3Fq%3D%E3%81%82%E3%81%84%E3%81%A1%E3%82%83%E3%82%93'));
+		expect(res).toEqualValueOf(STR('https%3A%2F%2Fexample.com%2F%3Fq%3D%E3%81%82%E3%81%84%E3%81%A1%E3%82%83%E3%82%93'));
 	});
 
 	test.concurrent('decode_full', async () => {
 		const res = await exe(`
 		<: Uri:decode_full("https%3A%2F%2Fexample.com%2F%3Fq%3D%E3%81%82%E3%81%84%E3%81%A1%E3%82%83%E3%82%93")
 		`);
-		eq(res, STR('https%3A%2F%2Fexample.com%2F%3Fq%3Dあいちゃん'));
+		expect(res).toEqualValueOf(STR('https%3A%2F%2Fexample.com%2F%3Fq%3Dあいちゃん'));
 	});
 
 	test.concurrent('decode_component', async () => {
 		const res = await exe(`
 		<: Uri:decode_component("https%3A%2F%2Fexample.com%2F%3Fq%3D%E3%81%82%E3%81%84%E3%81%A1%E3%82%83%E3%82%93")
 		`);
-		eq(res, STR('https://example.com/?q=あいちゃん'));
+		expect(res).toEqualValueOf(STR('https://example.com/?q=あいちゃん'));
 	});
 });
 
 describe('Error', () => {
 	test.concurrent('create', async () => {
-		eq(
-			await exe(`
+		expect(await exe(`
 			<: Error:create('ai', {chan: 'kawaii'})
-			`),
-			ERROR('ai', OBJ(new Map([['chan', STR('kawaii')]])))
-		);
+			`)).toEqualValueOf(ERROR('ai', OBJ(new Map([['chan', STR('kawaii')]]))));
 	});
 });
 
@@ -307,7 +304,7 @@ describe('Json', () => {
 		const res = await exe(`
 		<: Json:stringify(@(){})
 		`);
-		eq(res, STR('"<function>"'));
+		expect(res).toEqualValueOf(STR('"<function>"'));
 	});
 
 	test.concurrent('parsable', async () => {
@@ -323,7 +320,7 @@ describe('Json', () => {
 					Json:stringify(Json:parse('${str}'))
 				]
 			`);
-			eq(res, ARR([TRUE, STR(str)]));
+			expect(res).toEqualValueOf(ARR([TRUE, STR(str)]));
 		});
 	});
 	test.concurrent('unparsable', async () => {
@@ -338,7 +335,7 @@ describe('Json', () => {
 					Json:parse('${str}')
 				]
 			`);
-			eq(res, ARR([FALSE, ERROR('not_json')]));
+			expect(res).toEqualValueOf(ARR([FALSE, ERROR('not_json')]));
 		});
 	});
 });
@@ -350,49 +347,49 @@ describe('Date', () => {
 		const res = await exe(`
 			<: [Date:year(0), Date:year(${example_time})]
 		`);
-		eq(res, ARR([NUM(zero_date.getFullYear()), NUM(2024)]));
+		expect(res).toEqualValueOf(ARR([NUM(zero_date.getFullYear()), NUM(2024)]));
 	});
 
 	test.concurrent('month', async () => {
 		const res = await exe(`
 			<: [Date:month(0), Date:month(${example_time})]
 		`);
-		eq(res, ARR([NUM(zero_date.getMonth() + 1), NUM(1)]));
+		expect(res).toEqualValueOf(ARR([NUM(zero_date.getMonth() + 1), NUM(1)]));
 	});
 
 	test.concurrent('day', async () => {
 		const res = await exe(`
 			<: [Date:day(0), Date:day(${example_time})]
 		`);
-		eq(res, ARR([NUM(zero_date.getDate()), NUM(2)]));
+		expect(res).toEqualValueOf(ARR([NUM(zero_date.getDate()), NUM(2)]));
 	});
 
 	test.concurrent('hour', async () => {
 		const res = await exe(`
 			<: [Date:hour(0), Date:hour(${example_time})]
 		`);
-		eq(res, ARR([NUM(zero_date.getHours()), NUM(3)]));
+		expect(res).toEqualValueOf(ARR([NUM(zero_date.getHours()), NUM(3)]));
 	});
 
 	test.concurrent('minute', async () => {
 		const res = await exe(`
 			<: [Date:minute(0), Date:minute(${example_time})]
 		`);
-		eq(res, ARR([NUM(zero_date.getMinutes()), NUM(4)]));
+		expect(res).toEqualValueOf(ARR([NUM(zero_date.getMinutes()), NUM(4)]));
 	});
 
 	test.concurrent('second', async () => {
 		const res = await exe(`
 			<: [Date:second(0), Date:second(${example_time})]
 		`);
-		eq(res, ARR([NUM(zero_date.getSeconds()), NUM(5)]));
+		expect(res).toEqualValueOf(ARR([NUM(zero_date.getSeconds()), NUM(5)]));
 	});
 
 	test.concurrent('millisecond', async () => {
 		const res = await exe(`
 			<: [Date:millisecond(0), Date:millisecond(${example_time})]
 		`);
-		eq(res, ARR([NUM(zero_date.getMilliseconds()), NUM(6)]));
+		expect(res).toEqualValueOf(ARR([NUM(zero_date.getMilliseconds()), NUM(6)]));
 	});
 
 	test.concurrent('to_iso_str', async () => {
@@ -402,7 +399,7 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
-		eq(res.value[0], res.value[1]);
+		expect(res.value[0]).toEqualValueOf(res.value[1]);
 		assert.match(res.value[2].value, /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}\.[0-9]{3,3}(Z|[-+][0-9]{2,2}:[0-9]{2,2})$/);
 	});
 
@@ -413,8 +410,8 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
-		eq(res.value[0], res.value[1]);
-		eq(res.value[2], STR("2024-04-11T16:47:46.021Z"));
+		expect(res.value[0]).toEqualValueOf(res.value[1]);
+		expect(res.value[2]).toEqualValueOf(STR("2024-04-11T16:47:46.021Z"));
 	});
 
 	test.concurrent('to_iso_str (+09:00)', async () => {
@@ -424,8 +421,8 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
-		eq(res.value[0], res.value[1]);
-		eq(res.value[2], STR("2024-04-12T01:47:46.021+09:00"));
+		expect(res.value[0]).toEqualValueOf(res.value[1]);
+		expect(res.value[2]).toEqualValueOf(STR("2024-04-12T01:47:46.021+09:00"));
 	});
 
 	test.concurrent('to_iso_str (-05:18)', async () => {
@@ -435,18 +432,18 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
-		eq(res.value[0], res.value[1]);
-		eq(res.value[2], STR("2024-04-11T11:29:46.021-05:18"));
+		expect(res.value[0]).toEqualValueOf(res.value[1]);
+		expect(res.value[2]).toEqualValueOf(STR("2024-04-11T11:29:46.021-05:18"));
 	});
 
 	test.concurrent('parse', async () => {
-		eq(await exe(`<: [
+		expect(await exe(`<: [
 			'01 Jan 1970 00:00:00 GMT'
 			'1970-01-01'
 			'1970-01-01T00:00:00.000Z'
 			'1970-01-01T00:00:00.000+00:00'
 			'hoge'
-		].map(Date:parse)`), ARR([
+		].map(Date:parse)`)).toEqualValueOf(ARR([
 			NUM(0),
 			NUM(0),
 			NUM(0),
