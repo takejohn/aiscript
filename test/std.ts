@@ -1,8 +1,8 @@
 import * as assert from 'assert';
 import { describe, test } from 'vitest';
-import { utils } from '../src';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
-import { exe, eq } from './testutils';
+import { utils } from '../src/index.js';
+import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
+import { exe, eq } from './testutils.js';
 
 
 describe('Core', () => {

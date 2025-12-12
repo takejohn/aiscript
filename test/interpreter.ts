@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
-import { Parser, Interpreter, values, errors, utils, Ast } from '../src';
-import { FALSE, NUM, OBJ, STR, TRUE, Value } from '../src/interpreter/value';
+import { Parser, Interpreter, values, errors, utils, Ast } from '../src/index.js';
+import { FALSE, NUM, OBJ, STR, TRUE, Value } from '../src/interpreter/value.js';
 
 let { FN_NATIVE } = values;
 let { AiScriptRuntimeError, AiScriptIndexOutOfRangeError, AiScriptHostsideError } = errors;

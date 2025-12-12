@@ -1,7 +1,7 @@
 import { describe, test } from "vitest";
-import { utils } from '../src';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
-import { exe, getMeta, eq } from './testutils';
+import { utils } from '../src/index.js';
+import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
+import { exe, getMeta, eq } from './testutils.js';
 
 describe('empty lines', () => {
     describe('match', () => {
