@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { utils } from '../src/index.js';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
 import { AiScriptRuntimeError, AiScriptSyntaxError } from '../src/error.js';
-import { exe, getMeta, eq } from './testutils.js';
+import { exe, getMeta } from './testutils.js';
 
 describe('function types', () => {
 	test.concurrent('multiple params', async () => {

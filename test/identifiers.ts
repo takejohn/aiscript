@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { Parser } from '../src/index.js';
 import { AiScriptSyntaxError } from '../src/error.js';
-import { eq, exe } from './testutils.js';
+import { exe } from './testutils.js';
 import { NULL, NUM, STR, Value } from '../src/interpreter/value.js';
 
 const reservedWords = [

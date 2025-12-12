@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest';
 import { Parser, Interpreter, Ast } from '../src/index.js';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
 import { AiScriptSyntaxError, AiScriptRuntimeError, AiScriptIndexOutOfRangeError } from '../src/error.js';
-import { exeSync, eq } from './testutils.js';
+import { exeSync } from './testutils.js';
 
 test.concurrent('Hello, world!', () => {
 	const res = exeSync('"Hello, world!"');

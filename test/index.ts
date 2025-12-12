@@ -8,7 +8,7 @@ import { describe, expect, test } from 'vitest';
 import { Parser, Interpreter, Ast } from '../src/index.js';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
 import { AiScriptSyntaxError, AiScriptRuntimeError, AiScriptIndexOutOfRangeError } from '../src/error.js';
-import { exe, eq } from './testutils.js';
+import { exe } from './testutils.js';
 
 
 test.concurrent('Hello, world!', async () => {

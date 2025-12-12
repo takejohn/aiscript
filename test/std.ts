@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { describe, expect, test } from 'vitest';
 import { utils } from '../src/index.js';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
-import { exe, eq } from './testutils.js';
+import { exe } from './testutils.js';
 
 
 describe('Core', () => {

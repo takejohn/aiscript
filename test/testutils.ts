@@ -42,7 +42,3 @@ export const getMeta = (script: string) => {
 
 	return metadata;
 };
-
-export const eq = (a: Value | undefined, b: Value, expect = globalExpect) => {
-	expect(a).toEqualValueOf(b);
-};
