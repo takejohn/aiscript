@@ -14,6 +14,10 @@ const pickTypeAndValue = (value: object): { type?: unknown, value?: unknown } =>
 
 expect.extend({
 	toEqualValueOf(received: unknown, expected: values.Value) {
+		if (typeof expected !== 'object' || expected === null || typeof expected.type !== 'string') {
+			throw new TypeError(`expected value must be AiScript value, received ${this.utils.stringify(expected)}`);
+		}
+
 		const expectedValue = pickTypeAndValue(expected);
 		if (typeof received === 'object' && received !== null) {
 			const receivedValue = pickTypeAndValue(received);
