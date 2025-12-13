@@ -1,5 +1,4 @@
-import * as assert from 'assert';
-import { describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vitest';
 import { } from '../src/index.js';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
 import { AiScriptSyntaxError } from '../src/error.js';
@@ -252,11 +251,11 @@ describe('literal', () => {
 	})
 
 	test.concurrent('obj (invalid key)', async () => {
-		assert.rejects(() => exe(`
+		await expect(() => exe(`
 		<: {
 			42: 42,
 		}
-		`));
+		`)).rejects.toThrow();
 	});
 
 	test.concurrent('obj and arr (separated by line break)', async () => {

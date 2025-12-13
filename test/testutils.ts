@@ -1,10 +1,11 @@
-import { expect as globalExpect } from 'vitest';
 import { Parser, Interpreter } from '../src/index.js';
 import { Value } from '../src/interpreter/value.js';
+import { Variable } from '../src/interpreter/variable.js';
 
+// TODO: 返り値の型が正確でないので修正
 export async function exe(script: string): Promise<Value | undefined> {
 	const parser = new Parser();
-	let result = undefined;
+	let result: Value | Variable | undefined | (Value | Variable | undefined)[] = undefined;
 	const interpreter = new Interpreter({}, {
 		out(value) {
 			if (!result) result = value;

@@ -1,5 +1,4 @@
-import * as assert from 'assert';
-import { describe, test } from 'vitest';
+import { assert, describe, test } from 'vitest';
 import { Scanner } from '../src/parser/scanner.js';
 import { TOKEN, TokenKind, TokenPosition } from '../src/parser/token.js';
 import { CharStream } from '../src/parser/streams/char-stream.js';

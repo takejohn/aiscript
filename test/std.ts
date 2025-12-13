@@ -1,5 +1,4 @@
-import * as assert from 'assert';
-import { describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vitest';
 import { utils } from '../src/index.js';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
 import { exe } from './testutils.js';
@@ -34,10 +33,9 @@ describe('Core', () => {
 	});
 
 	test.concurrent('abort', async () => {
-		assert.rejects(
-			exe('Core:abort("hoge")'),
-			e => e.message.includes('hoge'),
-		);
+		await expect(exe('Core:abort("hoge")')).rejects.toThrowError(expect.objectContaining({
+			message: expect.stringContaining('hoge'),
+		}));
 	});
 });
 
@@ -399,8 +397,12 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
+		assert.ok(res != null && utils.isArray(res));
+		assert.exists(res.value[1]);
 		expect(res.value[0]).toEqualValueOf(res.value[1]);
-		assert.match(res.value[2].value, /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}\.[0-9]{3,3}(Z|[-+][0-9]{2,2}:[0-9]{2,2})$/);
+		expect(res.value[2]).toEqualValueOf(STR(
+			expect.stringMatching(/^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}\.[0-9]{3,3}(Z|[-+][0-9]{2,2}:[0-9]{2,2})$/),
+		));
 	});
 
 	test.concurrent('to_iso_str (UTC)', async () => {
@@ -410,6 +412,8 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
+		assert.ok(res != null && utils.isArray(res));
+		assert.exists(res.value[1]);
 		expect(res.value[0]).toEqualValueOf(res.value[1]);
 		expect(res.value[2]).toEqualValueOf(STR("2024-04-11T16:47:46.021Z"));
 	});
@@ -421,6 +425,8 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
+		assert.ok(res != null && utils.isArray(res));
+		assert.exists(res.value[1]);
 		expect(res.value[0]).toEqualValueOf(res.value[1]);
 		expect(res.value[2]).toEqualValueOf(STR("2024-04-12T01:47:46.021+09:00"));
 	});
@@ -432,6 +438,8 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
+		assert.ok(res != null && utils.isArray(res));
+		assert.exists(res.value[1]);
 		expect(res.value[0]).toEqualValueOf(res.value[1]);
 		expect(res.value[2]).toEqualValueOf(STR("2024-04-11T11:29:46.021-05:18"));
 	});

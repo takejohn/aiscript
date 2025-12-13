@@ -1,5 +1,4 @@
-import * as assert from 'assert';
-import { describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vitest';
 import { utils } from '../src/index.js';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
 import { AiScriptRuntimeError, AiScriptSyntaxError } from '../src/error.js';
@@ -110,9 +109,9 @@ describe('generics', () => {
 		});
 
 		test.concurrent('empty', async () => {
-			await assert.rejects(() => exe(`
+			await expect(() => exe(`
 			@f<>() {}
-			`));
+			`)).rejects.toThrow();
 		});
 
 		test.concurrent('cannot have inner type', async () => {
@@ -183,9 +182,9 @@ describe('union', () => {
 	});
 
 	test.concurrent('invalid inner', async () => {
-		await assert.rejects(() => exe(`
+		await expect(() => exe(`
 		let a: ThisIsAnInvalidTypeName | null = null
-		`));
+		`)).rejects.toThrow();
 	});
 });
 

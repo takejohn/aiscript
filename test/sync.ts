@@ -1,6 +1,5 @@
 /* eslint-disable prefer-const */
 
-import * as assert from 'assert';
 import { describe, expect, test } from 'vitest';
 import { Parser, Interpreter, Ast } from '../src/index.js';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';

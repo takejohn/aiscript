@@ -3,8 +3,7 @@
  * Tests!
  */
 
-import * as assert from 'assert';
-import { describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vitest';
 import { Parser, Interpreter, Ast } from '../src/index.js';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
 import { AiScriptSyntaxError, AiScriptRuntimeError, AiScriptIndexOutOfRangeError } from '../src/error.js';
@@ -259,21 +258,21 @@ describe('Array', () => {
 	});
 
 	test.concurrent('Assign array item to out of range', async () => {
-		assert.rejects(exe(`
+		await expect(exe(`
 			let arr = [1, 2, 3]
 
 			arr[3] = 4
 
 			<: null
-		`), AiScriptIndexOutOfRangeError);
+		`)).rejects.toThrow(AiScriptIndexOutOfRangeError);
 
-		assert.rejects(exe(`
+		await expect(exe(`
 			let arr = [1, 2, 3]
 
 			arr[9] = 10
 
 			<: null
-		`), AiScriptIndexOutOfRangeError)
+		`)).rejects.toThrow(AiScriptIndexOutOfRangeError);
 	});
 
 	test.concurrent('index out of range error', async () => {
@@ -474,6 +473,7 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'prop' ||
 			line.target.target.type !== 'identifier'
@@ -490,6 +490,7 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'index' ||
 			line.target.target.type !== 'identifier' ||
@@ -507,11 +508,14 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'call' ||
 			line.target.target.type !== 'identifier' ||
 			line.target.args.length !== 2 ||
+			line.target.args[0] == null ||
 			line.target.args[0].type !== 'num' ||
+			line.target.args[1] == null ||
 			line.target.args[1].type !== 'num'
 		)
 			assert.fail();
@@ -527,6 +531,7 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'prop' ||
 			line.target.target.type !== 'prop' ||
@@ -848,11 +853,13 @@ describe('Attribute', () => {
 		}
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0] != null)
 		node = nodes[0];
 		if (node.type !== 'def' || node.dest.type !== 'identifier') assert.fail();
 		assert.equal(node.dest.name, 'onRecieved');
 		assert.equal(node.attr.length, 1);
 		// attribute 1
+		assert.ok(node.attr[0] != null);
 		attr = node.attr[0];
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Event');
@@ -873,11 +880,13 @@ describe('Attribute', () => {
 		}
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0] != null);
 		node = nodes[0];
 		if (node.type !== 'def' || node.dest.type !== 'identifier') assert.fail();
 		assert.equal(node.dest.name, 'createNote');
 		assert.equal(node.attr.length, 3);
 		// attribute 1
+		assert.ok(node.attr[0] != null);
 		attr = node.attr[0];
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Endpoint');
@@ -893,12 +902,14 @@ describe('Attribute', () => {
 			}
 		}
 		// attribute 2
+		assert.ok(node.attr[1] != null);
 		attr = node.attr[1];
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Desc');
 		if (attr.value.type !== 'str') assert.fail();
 		assert.equal(attr.value.value, 'Create a note.');
 		// attribute 3
+		assert.ok(node.attr[2] != null);
 		attr = node.attr[2];
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Cat');
@@ -918,11 +929,13 @@ describe('Attribute', () => {
 		let data = 1
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0]);
 		node = nodes[0];
 		if (node.type !== 'def' || node.dest.type !== 'identifier') assert.fail();
 		assert.equal(node.dest.name, 'data');
 		assert.equal(node.attr.length, 1);
 		// attribute 1
+		assert.ok(node.attr[0]);
 		attr = node.attr[0];
 		assert.ok(attr.type === 'attr');
 		assert.equal(attr.name, 'serializable');
@@ -942,10 +955,13 @@ describe('Attribute', () => {
 		`);
 		assert.equal(nodes.length, 1);
 		const ns = nodes[0];
+		assert.ok(ns != null);
 		assert.ok(ns.type === 'ns');
 		const member = ns.members[0];
+		assert.ok(member != null);
 		assert.ok(member.type === 'def');
 		const attr = member.attr[0];
+		assert.ok(attr != null);
 		assert.equal(attr.name, 'test');
 	});
 
@@ -968,6 +984,7 @@ describe('Location', () => {
 			@f(a) { a }
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0] != null);
 		node = nodes[0];
 		if (!node.loc) assert.fail();
 		assert.deepEqual(node.loc, {
@@ -985,6 +1002,7 @@ describe('Location', () => {
 		@f(a) { a }
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0] != null);
 		node = nodes[0];
 		if (!node.loc) assert.fail();
 		assert.deepEqual(node.loc.start, { line: 5, column: 3 });
@@ -996,6 +1014,7 @@ describe('Location', () => {
 			\`hoge{1}fuga\`
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0] != null);
 		node = nodes[0];
 		if (!node.loc || node.type !== "tmpl") assert.fail();
 		assert.deepEqual(node.loc, {
@@ -1004,14 +1023,17 @@ describe('Location', () => {
 		});
 		assert.equal(node.tmpl.length, 3);
 		const [elem1, elem2, elem3] = node.tmpl as Ast.Expression[];
+		assert.ok(elem1 != null);
 		assert.deepEqual(elem1.loc, {
 			start: { line: 2, column: 4 },
 			end: { line: 2, column: 10 },
 		});
+		assert.ok(elem2 != null);
 		assert.deepEqual(elem2.loc, {
 			start: { line: 2, column: 10 },
 			end: { line: 2, column: 11 },
 		});
+		assert.ok(elem3 != null);
 		assert.deepEqual(elem3.loc, {
 			start: { line: 2, column: 11 },
 			end: { line: 2, column: 17 },

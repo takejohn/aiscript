@@ -1,5 +1,4 @@
-import * as assert from 'assert';
-import { describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vitest';
 import { utils } from '../src/index.js';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
 import { AiScriptRuntimeError, AiScriptUnexpectedEOFError } from '../src/error.js';
@@ -178,21 +177,21 @@ describe('separator', () => {
 		});
 
 		test.concurrent('no separator', async () => {
-			await assert.rejects(async () => {
+			await expect(async () => {
 				await exe(`
 				let x = 1
 				<:match x{case 1=>"a" case 2=>"b"}
 				`);
-			});
+			}).rejects.toThrow();
 		});
 
 		test.concurrent('no separator (default)', async () => {
-			await assert.rejects(async () => {
+			await expect(async () => {
 				await exe(`
 				let x = 1
 				<:match x{case 1=>"a" default=>"b"}
 				`);
-			});
+			}).rejects.toThrow();
 		});
 	});
 
@@ -516,13 +515,13 @@ describe('Comment', () => {
 	});
 
 	test.concurrent('invalid EOF in multi line comment', async () => {
-		await assert.rejects(() => exe(`
+		await expect(() => exe(`
 		/* comment
-		`), AiScriptUnexpectedEOFError);
+		`)).rejects.toThrow(AiScriptUnexpectedEOFError);
 	});
 
 	test.concurrent('invalid EOF in multi line comment 2', async () => {
-		await assert.rejects(() => exe('/* comment *'), AiScriptUnexpectedEOFError);
+		await expect(() => exe('/* comment *')).rejects.toThrow(AiScriptUnexpectedEOFError);
 	});
 });
 
@@ -777,12 +776,12 @@ describe('for', () => {
 	});
 
 	test.concurrent('scope', async () => {
-		await assert.rejects(async () => {
+		await expect(async () => {
 			await exe(`
 			for 1 let a = 1
 			<: a
 			`);
-		});
+		}).rejects.toThrow();
 	});
 
 	test.concurrent('with label', async () => {
@@ -1590,24 +1589,24 @@ describe('if', () => {
 	});
 
 	test.concurrent('scope', async () => {
-		await assert.rejects(async () => {
+		await expect(async () => {
 			await exe(`
 			if true let a = 1
 			<: a
 			`);
-		});
-		await assert.rejects(async () => {
+		}).rejects.toThrow();
+		await expect(async () => {
 			await exe(`
 			if false null elif true let a = 1
 			<: a
 			`);
-		});
-		await assert.rejects(async () => {
+		}).rejects.toThrow();
+		await expect(async () => {
 			await exe(`
 			if false null else let a = 1
 			<: a
 			`);
-		});
+		}).rejects.toThrow();
 	});
 });
 
@@ -1692,18 +1691,18 @@ describe('match', () => {
 	});
 
 	test.concurrent('scope', async () => {
-		await assert.rejects(async () => {
+		await expect(async () => {
 			await exe(`
 			match 1 { case 1 => let a = 1 }
 			<: a
 			`);
-		});
-		await assert.rejects(async () => {
+		}).rejects.toThrow();
+		await expect(async () => {
 			await exe(`
 			match 1 { default => let a = 1 }
 			<: a
 			`);
-		});
+		}).rejects.toThrow();
 	});
 });
 
