@@ -1,4 +1,4 @@
-import { decodeUnicodeEscapeSequence, isHighSurrogate, isLowSurrogate, isSurrogatePair } from '../src/utils/characters';
+import { decodeUnicodeEscapeSequence, isHighSurrogate, isLowSurrogate, isSurrogatePair } from '../src/utils/characters.js';
 import { describe, expect, test } from 'vitest';
 
 describe('isHighSurrogate', () => {

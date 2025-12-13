@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { AiSON } from '../src/parser/aison';
+import { AiSON } from '../src/parser/aison.js';
 
 describe('parse', () => {
 	test.concurrent('str', () => {

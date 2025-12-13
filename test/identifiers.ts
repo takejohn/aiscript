@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { Parser } from '../src';
-import { AiScriptSyntaxError } from '../src/error';
-import { eq, exe } from './testutils';
-import { NULL, NUM, STR, Value } from '../src/interpreter/value';
+import { Parser } from '../src/index.js';
+import { AiScriptSyntaxError } from '../src/error.js';
+import { exe } from './testutils.js';
+import { NULL, NUM, STR, Value } from '../src/interpreter/value.js';
 
 const reservedWords = [
 	// 使用中の語
@@ -306,7 +306,7 @@ describe.each(
 		expect.hasAssertions();
 		if (allowed) {
 			const res = await exe(sampleCode(word, word));
-			eq(res, expected, expect);
+			expect(res).toEqualValueOf(expected);
 		} else {
 			expect(() => parser.parse(sampleCode(word, word))).toThrow(AiScriptSyntaxError);
 			await Promise.resolve(); // https://github.com/vitest-dev/vitest/issues/4750
@@ -339,7 +339,7 @@ describe('identifier validation on obj key', () => {
 			reservedWords
 		)('reserved word %s must be allowed', async (word) => {
 			const res = await exe(code(word, word));
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 
 		test.concurrent.each(
@@ -348,7 +348,7 @@ describe('identifier validation on obj key', () => {
 			expect.hasAssertions();
 			if (allowed) {
 				const res = await exe(code(word, word));
-				eq(res, NUM(1));
+				expect(res).toEqualValueOf(NUM(1));
 			} else {
 				expect(() => parser.parse(code(word, word))).toThrow(AiScriptSyntaxError);
 				await Promise.resolve(); // https://github.com/vitest-dev/vitest/issues/4750
@@ -376,7 +376,7 @@ describe('reserved word validation on string obj key', () => {
 			reservedWords
 		)('reserved word %s must be allowed', async (word) => {
 			const res = await exe(code(word, word));
-			eq(res, NUM(1));
+			expect(res).toEqualValueOf(NUM(1));
 		});
 	});
 });

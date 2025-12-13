@@ -15,13 +15,14 @@
 		"allowJs": true,
 		"removeComments": false,
 		"resolveJsonModule": true,
-    "rootDir": "./src",
 		"noLib": false,
 		"outDir": "built",
 		"strictNullChecks": true
 	},
 	"compileOnSave": false,
 	"include": [
-		"./src/**/*"
-	]
+		"./src/**/*",
+		"./test/**/*",
+		"vitest.d.ts"
+	],
 }
