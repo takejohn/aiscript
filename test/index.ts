@@ -474,6 +474,7 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'prop' ||
 			line.target.target.type !== 'identifier'
@@ -490,6 +491,7 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'index' ||
 			line.target.target.type !== 'identifier' ||
@@ -507,17 +509,18 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'call' ||
 			line.target.target.type !== 'identifier' ||
 			line.target.args.length !== 2 ||
-			line.target.args[0].type !== 'num' ||
-			line.target.args[1].type !== 'num'
+			line.target.args[0]!.type !== 'num' ||
+			line.target.args[1]!.type !== 'num'
 		)
 			assert.fail();
 		assert.equal(line.target.target.name, 'foo');
-		assert.equal(line.target.args[0].value, 42);
-		assert.equal(line.target.args[1].value, 57);
+		assert.equal(line.target.args[0]!.value, 42);
+		assert.equal(line.target.args[1]!.value, 57);
 		assert.equal(line.name, 'bar');
 	});
 
@@ -527,6 +530,7 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'prop' ||
 			line.target.target.type !== 'prop' ||
@@ -848,12 +852,12 @@ describe('Attribute', () => {
 		}
 		`);
 		assert.equal(nodes.length, 1);
-		node = nodes[0];
+		node = nodes[0]!;
 		if (node.type !== 'def' || node.dest.type !== 'identifier') assert.fail();
 		assert.equal(node.dest.name, 'onRecieved');
 		assert.equal(node.attr.length, 1);
 		// attribute 1
-		attr = node.attr[0];
+		attr = node.attr[0]!;
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Event');
 		if (attr.value.type !== 'str') assert.fail();
@@ -873,12 +877,12 @@ describe('Attribute', () => {
 		}
 		`);
 		assert.equal(nodes.length, 1);
-		node = nodes[0];
+		node = nodes[0]!;
 		if (node.type !== 'def' || node.dest.type !== 'identifier') assert.fail();
 		assert.equal(node.dest.name, 'createNote');
 		assert.equal(node.attr.length, 3);
 		// attribute 1
-		attr = node.attr[0];
+		attr = node.attr[0]!;
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Endpoint');
 		if (attr.value.type !== 'obj') assert.fail();
@@ -893,13 +897,13 @@ describe('Attribute', () => {
 			}
 		}
 		// attribute 2
-		attr = node.attr[1];
+		attr = node.attr[1]!;
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Desc');
 		if (attr.value.type !== 'str') assert.fail();
 		assert.equal(attr.value.value, 'Create a note.');
 		// attribute 3
-		attr = node.attr[2];
+		attr = node.attr[2]!;
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Cat');
 		if (attr.value.type !== 'bool') assert.fail();
@@ -918,12 +922,12 @@ describe('Attribute', () => {
 		let data = 1
 		`);
 		assert.equal(nodes.length, 1);
-		node = nodes[0];
+		node = nodes[0]!;
 		if (node.type !== 'def' || node.dest.type !== 'identifier') assert.fail();
 		assert.equal(node.dest.name, 'data');
 		assert.equal(node.attr.length, 1);
 		// attribute 1
-		attr = node.attr[0];
+		attr = node.attr[0]!;
 		assert.ok(attr.type === 'attr');
 		assert.equal(attr.name, 'serializable');
 		if (attr.value.type !== 'bool') assert.fail();
@@ -941,11 +945,13 @@ describe('Attribute', () => {
 		}
 		`);
 		assert.equal(nodes.length, 1);
-		const ns = nodes[0];
+		const ns = nodes[0]!;
 		assert.ok(ns.type === 'ns');
 		const member = ns.members[0];
+		assert.ok(member != null);
 		assert.ok(member.type === 'def');
 		const attr = member.attr[0];
+		assert.ok(attr != null);
 		assert.equal(attr.name, 'test');
 	});
 
@@ -968,7 +974,7 @@ describe('Location', () => {
 			@f(a) { a }
 		`);
 		assert.equal(nodes.length, 1);
-		node = nodes[0];
+		node = nodes[0]!;
 		if (!node.loc) assert.fail();
 		assert.deepEqual(node.loc, {
 			start: { line: 2, column: 4 },
@@ -985,7 +991,7 @@ describe('Location', () => {
 		@f(a) { a }
 		`);
 		assert.equal(nodes.length, 1);
-		node = nodes[0];
+		node = nodes[0]!;
 		if (!node.loc) assert.fail();
 		assert.deepEqual(node.loc.start, { line: 5, column: 3 });
 	});
@@ -996,14 +1002,14 @@ describe('Location', () => {
 			\`hoge{1}fuga\`
 		`);
 		assert.equal(nodes.length, 1);
-		node = nodes[0];
+		node = nodes[0]!;
 		if (!node.loc || node.type !== "tmpl") assert.fail();
 		assert.deepEqual(node.loc, {
 			start: { line: 2, column: 4 },
 			end: { line: 2, column: 17 },
 		});
 		assert.equal(node.tmpl.length, 3);
-		const [elem1, elem2, elem3] = node.tmpl as Ast.Expression[];
+		const [elem1, elem2, elem3] = node.tmpl as [Ast.Expression, Ast.Expression, Ast.Expression];
 		assert.deepEqual(elem1.loc, {
 			start: { line: 2, column: 4 },
 			end: { line: 2, column: 10 },

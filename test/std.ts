@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { describe, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { utils } from '../src/index.js';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
 import { exe, eq } from './testutils.js';
@@ -34,8 +34,7 @@ describe('Core', () => {
 	});
 
 	test.concurrent('abort', async () => {
-		assert.rejects(
-			exe('Core:abort("hoge")'),
+		expect(() => exe('Core:abort("hoge")')).rejects.toSatisfy(
 			e => e.message.includes('hoge'),
 		);
 	});
@@ -402,8 +401,12 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
-		eq(res.value[0], res.value[1]);
-		assert.match(res.value[2].value, /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}\.[0-9]{3,3}(Z|[-+][0-9]{2,2}:[0-9]{2,2})$/);
+		assert.ok(res != null);
+		assert.ok(res.type === 'arr');
+		expect(res.value).toHaveLength(3);
+		eq(res.value[0]!, res.value[1]!);
+		assert.ok(res.value[2]!.type === 'str');
+		assert.match(res.value[2]!.value, /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}\.[0-9]{3,3}(Z|[-+][0-9]{2,2}:[0-9]{2,2})$/);
 	});
 
 	test.concurrent('to_iso_str (UTC)', async () => {
@@ -413,8 +416,11 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
-		eq(res.value[0], res.value[1]);
-		eq(res.value[2], STR("2024-04-11T16:47:46.021Z"));
+		assert.ok(res != null);
+		assert.ok(res.type === 'arr');
+		expect(res.value).toHaveLength(3);
+		eq(res.value[0]!, res.value[1]!);
+		eq(res.value[2]!, STR("2024-04-11T16:47:46.021Z"));
 	});
 
 	test.concurrent('to_iso_str (+09:00)', async () => {
@@ -424,8 +430,11 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
-		eq(res.value[0], res.value[1]);
-		eq(res.value[2], STR("2024-04-12T01:47:46.021+09:00"));
+		assert.ok(res != null);
+		assert.ok(res.type === 'arr');
+		expect(res.value).toHaveLength(3);
+		eq(res.value[0]!, res.value[1]!);
+		eq(res.value[2]!, STR("2024-04-12T01:47:46.021+09:00"));
 	});
 
 	test.concurrent('to_iso_str (-05:18)', async () => {
@@ -435,8 +444,11 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
-		eq(res.value[0], res.value[1]);
-		eq(res.value[2], STR("2024-04-11T11:29:46.021-05:18"));
+		assert.ok(res != null);
+		assert.ok(res.type === 'arr');
+		expect(res.value).toHaveLength(3);
+		eq(res.value[0]!, res.value[1]!);
+		eq(res.value[2]!, STR("2024-04-11T11:29:46.021-05:18"));
 	});
 
 	test.concurrent('parse', async () => {

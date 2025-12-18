@@ -173,7 +173,7 @@ describe('IRQ', () => {
 			const interpreter = new Interpreter({}, {
 				irqRate,
 				// It's safe only when no massive loop occurs
-				irqSleep: async () => count++,
+				irqSleep: async () => void count++,
 			});
 			await interpreter.exec(Parser.parse(`
 			'Ai-chan kawaii'
