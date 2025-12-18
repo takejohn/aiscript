@@ -1,7 +1,6 @@
-import * as assert from 'assert';
-import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
-import { Parser, Interpreter, values, errors, utils, Ast } from '../src';
-import { FALSE, NUM, OBJ, STR, TRUE, Value } from '../src/interpreter/value';
+import { assert, describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
+import { Parser, Interpreter, values, errors, utils, Ast } from '../src/index.js';
+import { FALSE, NUM, OBJ, STR, TRUE, Value } from '../src/interpreter/value.js';
 
 let { FN_NATIVE } = values;
 let { AiScriptRuntimeError, AiScriptIndexOutOfRangeError, AiScriptHostsideError } = errors;
@@ -173,7 +172,7 @@ describe('IRQ', () => {
 			const interpreter = new Interpreter({}, {
 				irqRate,
 				// It's safe only when no massive loop occurs
-				irqSleep: async () => count++,
+				irqSleep: async () => void count++,
 			});
 			await interpreter.exec(Parser.parse(`
 			'Ai-chan kawaii'

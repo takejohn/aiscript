@@ -3,17 +3,16 @@
  * Tests!
  */
 
-import * as assert from 'assert';
-import { describe, expect, test } from 'vitest';
-import { Parser, Interpreter, Ast } from '../src';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
-import { AiScriptSyntaxError, AiScriptRuntimeError, AiScriptIndexOutOfRangeError } from '../src/error';
-import { exe, eq } from './testutils';
+import { assert, describe, expect, test } from 'vitest';
+import { Parser, Interpreter, Ast } from '../src/index.js';
+import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
+import { AiScriptSyntaxError, AiScriptRuntimeError, AiScriptIndexOutOfRangeError } from '../src/error.js';
+import { exe } from './testutils.js';
 
 
 test.concurrent('Hello, world!', async () => {
 	const res = await exe('<: "Hello, world!"');
-	eq(res, STR('Hello, world!'));
+	expect(res).toEqualValueOf(STR('Hello, world!'));
 });
 
 test.concurrent('empty script', async () => {
@@ -28,7 +27,7 @@ test.concurrent('式にコロンがあってもオブジェクトと判定され
 		Core:eq("ai", "ai")
 	}
 	`);
-	eq(res, BOOL(true));
+	expect(res).toEqualValueOf(BOOL(true));
 });
 
 test.concurrent('inc', async () => {
@@ -39,7 +38,7 @@ test.concurrent('inc', async () => {
 	a += 3
 	<: a
 	`);
-	eq(res, NUM(6));
+	expect(res).toEqualValueOf(NUM(6));
 });
 
 test.concurrent('dec', async () => {
@@ -50,7 +49,7 @@ test.concurrent('dec', async () => {
 	a -= 3
 	<: a
 	`);
-	eq(res, NUM(-6));
+	expect(res).toEqualValueOf(NUM(-6));
 });
 
 test.concurrent('参照が繋がらない', async () => {
@@ -61,7 +60,7 @@ test.concurrent('参照が繋がらない', async () => {
 
 	<: g()
 	`);
-	eq(res, STR('a'));
+	expect(res).toEqualValueOf(STR('a'));
 });
 
 test.concurrent('empty function', async () => {
@@ -69,7 +68,7 @@ test.concurrent('empty function', async () => {
 	@hoge() { }
 	<: hoge()
 	`);
-	eq(res, NULL);
+	expect(res).toEqualValueOf(NULL);
 });
 
 test.concurrent('empty lambda', async () => {
@@ -77,7 +76,7 @@ test.concurrent('empty lambda', async () => {
 	let hoge = @() { }
 	<: hoge()
 	`);
-	eq(res, NULL);
+	expect(res).toEqualValueOf(NULL);
 });
 
 test.concurrent('lambda that returns an object', async () => {
@@ -85,7 +84,7 @@ test.concurrent('lambda that returns an object', async () => {
 	let hoge = @() {{}}
 	<: hoge()
 	`);
-	eq(res, OBJ(new Map()));
+	expect(res).toEqualValueOf(OBJ(new Map()));
 });
 
 test.concurrent('Closure', async () => {
@@ -99,7 +98,7 @@ test.concurrent('Closure', async () => {
 	let s = store("ai")
 	<: s()
 	`);
-	eq(res, STR('ai'));
+	expect(res).toEqualValueOf(STR('ai'));
 });
 
 test.concurrent('Closure (counter)', async () => {
@@ -122,7 +121,7 @@ test.concurrent('Closure (counter)', async () => {
 
 	<: get_count()
 	`);
-	eq(res, NUM(3));
+	expect(res).toEqualValueOf(NUM(3));
 });
 
 test.concurrent('Recursion', async () => {
@@ -133,7 +132,7 @@ test.concurrent('Recursion', async () => {
 
 	<: fact(5)
 	`);
-	eq(res, NUM(120));
+	expect(res).toEqualValueOf(NUM(120));
 });
 
 describe('Object', () => {
@@ -149,7 +148,7 @@ describe('Object', () => {
 
 		<: obj.a.b.c
 		`);
-		eq(res, NUM(42));
+		expect(res).toEqualValueOf(NUM(42));
 	});
 
 	test.concurrent('property access (fn call)', async () => {
@@ -166,7 +165,7 @@ describe('Object', () => {
 
 		<: obj.a.b.c()
 		`);
-		eq(res, NUM(42));
+		expect(res).toEqualValueOf(NUM(42));
 	});
 
 	test.concurrent('property assign', async () => {
@@ -186,7 +185,7 @@ describe('Object', () => {
 
 		<: obj
 		`);
-		eq(res, OBJ(new Map<string, any>([
+		expect(res).toEqualValueOf(OBJ(new Map<string, any>([
 			['a', NUM(24)],
 			['b', OBJ(new Map<string, any>([
 				['c', NUM(2)],
@@ -206,7 +205,7 @@ describe('Object', () => {
 
 		<: obj."藍"
 		`);
-		eq(res, NUM(42));
+		expect(res).toEqualValueOf(NUM(42));
 	});
 
 	test.concurrent('string key including colon and period', async () => {
@@ -217,7 +216,7 @@ describe('Object', () => {
 
 		<: obj.":.:"
 		`);
-		eq(res, NUM(42));
+		expect(res).toEqualValueOf(NUM(42));
 	});
 
 	// 未実装
@@ -233,7 +232,7 @@ describe('Object', () => {
 
 		<: obj<key>
 		`);
-		eq(res, NUM(42));
+		expect(res).toEqualValueOf(NUM(42));
 	});
 });
 
@@ -244,7 +243,7 @@ describe('Array', () => {
 
 		<: arr[1]
 		`);
-		eq(res, STR('chan'));
+		expect(res).toEqualValueOf(STR('chan'));
 	});
 
 	test.concurrent('Array item assign', async () => {
@@ -255,25 +254,25 @@ describe('Array', () => {
 
 		<: arr
 		`);
-		eq(res, ARR([STR('ai'), STR('taso'), STR('kawaii')]));
+		expect(res).toEqualValueOf(ARR([STR('ai'), STR('taso'), STR('kawaii')]));
 	});
 
 	test.concurrent('Assign array item to out of range', async () => {
-		assert.rejects(exe(`
+		await expect(exe(`
 			let arr = [1, 2, 3]
 
 			arr[3] = 4
 
 			<: null
-		`), AiScriptIndexOutOfRangeError);
+		`)).rejects.toThrow(AiScriptIndexOutOfRangeError);
 
-		assert.rejects(exe(`
+		await expect(exe(`
 			let arr = [1, 2, 3]
 
 			arr[9] = 10
 
 			<: null
-		`), AiScriptIndexOutOfRangeError)
+		`)).rejects.toThrow(AiScriptIndexOutOfRangeError);
 	});
 
 	test.concurrent('index out of range error', async () => {
@@ -326,7 +325,7 @@ describe('chain', () => {
 
 		<: obj.a.b[0]("ai")
 		`);
-		eq(res, STR('ai'));
+		expect(res).toEqualValueOf(STR('ai'));
 	});
 
 	test.concurrent('chained assign left side (prop + index)', async () => {
@@ -341,7 +340,7 @@ describe('chain', () => {
 
 		<: obj
 		`);
-		eq(res, OBJ(new Map([
+		expect(res).toEqualValueOf(OBJ(new Map([
 			['a', OBJ(new Map([
 				['b', ARR([STR('ai'), STR('taso'), STR('kawaii')])]
 			]))]
@@ -361,7 +360,7 @@ describe('chain', () => {
 
 		<: x
 		`);
-		eq(res, STR('chan'));
+		expect(res).toEqualValueOf(STR('chan'));
 	});
 
 	test.concurrent('chained inc/dec left side (index + prop)', async () => {
@@ -378,7 +377,7 @@ describe('chain', () => {
 
 		<: arr
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			OBJ(new Map([
 				['a', NUM(2)],
 				['b', NUM(1)]
@@ -399,7 +398,7 @@ describe('chain', () => {
 
 		<: obj
 		`);
-		eq(res, OBJ(new Map([
+		expect(res).toEqualValueOf(OBJ(new Map([
 			['a', OBJ(new Map([
 				['b', ARR([NUM(1), NUM(3), NUM(2)])]
 			]))]
@@ -417,7 +416,7 @@ describe('chain', () => {
 
 		<: x()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 	});
 
 	test.concurrent('prop in return', async () => {
@@ -432,7 +431,7 @@ describe('chain', () => {
 
 		<: x()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 	});
 
 	test.concurrent('prop in each', async () => {
@@ -445,7 +444,7 @@ describe('chain', () => {
 		}
 		<: msgs
 		`);
-		eq(res, ARR([STR('ai!'), STR('chan!'), STR('kawaii!')]));
+		expect(res).toEqualValueOf(ARR([STR('ai!'), STR('chan!'), STR('kawaii!')]));
 	});
 
 	test.concurrent('prop in for', async () => {
@@ -456,7 +455,7 @@ describe('chain', () => {
 		}
 		<: x.count
 		`);
-		eq(res, NUM(45));
+		expect(res).toEqualValueOf(NUM(45));
 	});
 
 	test.concurrent('object with index', async () => {
@@ -465,7 +464,7 @@ describe('chain', () => {
 		ai['chan'] = 'kawaii'
 		<: ai[{a: 'chan'}['a']]
 		`);
-		eq(res, STR('kawaii'));
+		expect(res).toEqualValueOf(STR('kawaii'));
 	});
 
 	test.concurrent('property chain with parenthesis', async () => {
@@ -474,6 +473,7 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'prop' ||
 			line.target.target.type !== 'identifier'
@@ -490,6 +490,7 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'index' ||
 			line.target.target.type !== 'identifier' ||
@@ -507,11 +508,14 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'call' ||
 			line.target.target.type !== 'identifier' ||
 			line.target.args.length !== 2 ||
+			line.target.args[0] == null ||
 			line.target.args[0].type !== 'num' ||
+			line.target.args[1] == null ||
 			line.target.args[1].type !== 'num'
 		)
 			assert.fail();
@@ -527,6 +531,7 @@ describe('chain', () => {
 			`);
 		const line = ast[0];
 		if (
+			line == null ||
 			line.type !== 'prop' ||
 			line.target.type !== 'prop' ||
 			line.target.target.type !== 'prop' ||
@@ -546,7 +551,7 @@ test.concurrent('Does not throw error when divided by zero', async () => {
 	const res = await exe(`
 		<: (0 / 0)
 	`);
-	eq(res, NUM(NaN));
+	expect(res).toEqualValueOf(NUM(NaN));
 });
 
 describe('Function call', () => {
@@ -557,7 +562,7 @@ describe('Function call', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(42));
+		expect(res).toEqualValueOf(NUM(42));
 	});
 
 	test.concurrent('with args', async () => {
@@ -567,7 +572,7 @@ describe('Function call', () => {
 		}
 		<: f(42)
 		`);
-		eq(res, NUM(42));
+		expect(res).toEqualValueOf(NUM(42));
 	});
 
 	test.concurrent('with args (separated by comma)', async () => {
@@ -577,7 +582,7 @@ describe('Function call', () => {
 		}
 		<: f(1, 1)
 		`);
-		eq(res, NUM(2));
+		expect(res).toEqualValueOf(NUM(2));
 	});
 
 	test.concurrent('optional args', async () => {
@@ -587,7 +592,7 @@ describe('Function call', () => {
 		}
 		<: f(true)
 		`);
-		eq(res, ARR([TRUE, NULL, NULL]));
+		expect(res).toEqualValueOf(ARR([TRUE, NULL, NULL]));
 	});
 
 	test.concurrent('args with default value', async () => {
@@ -597,7 +602,7 @@ describe('Function call', () => {
 		}
 		<: f(5, 3)
 		`);
-		eq(res, ARR([NUM(5), NUM(3), NUM(2)]));
+		expect(res).toEqualValueOf(ARR([NUM(5), NUM(3), NUM(2)]));
 	});
 
 	test.concurrent('args must not be both optional and default-valued', async () => {
@@ -650,7 +655,7 @@ describe('Return', () => {
 		}
 		<: f()
 		`);
-		eq(res, STR('ai'));
+		expect(res).toEqualValueOf(STR('ai'));
 	});
 
 	test.concurrent('Early return (nested)', async () => {
@@ -666,7 +671,7 @@ describe('Return', () => {
 		}
 		<: f()
 		`);
-		eq(res, STR('ai'));
+		expect(res).toEqualValueOf(STR('ai'));
 	});
 
 	test.concurrent('Early return (nested) 2', async () => {
@@ -689,7 +694,7 @@ describe('Return', () => {
 
 		<: g()
 		`);
-		eq(res, STR('kawaii'));
+		expect(res).toEqualValueOf(STR('kawaii'));
 	});
 
 	test.concurrent('Early return without block', async () => {
@@ -701,7 +706,7 @@ describe('Return', () => {
 		}
 		<: f()
 		`);
-		eq(res, STR('ai'));
+		expect(res).toEqualValueOf(STR('ai'));
 	});
 
 	test.concurrent('return inside for', async () => {
@@ -717,7 +722,7 @@ describe('Return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(43));
+		expect(res).toEqualValueOf(NUM(43));
 	});
 
 	test.concurrent('return inside for 2', async () => {
@@ -730,7 +735,7 @@ describe('Return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 	});
 
 	test.concurrent('return inside loop', async () => {
@@ -746,7 +751,7 @@ describe('Return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(42));
+		expect(res).toEqualValueOf(NUM(42));
 	});
 
 	test.concurrent('return inside loop 2', async () => {
@@ -759,7 +764,7 @@ describe('Return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 	});
 
 	test.concurrent('return inside each', async () =>
@@ -776,7 +781,7 @@ describe('Return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(2));
+		expect(res).toEqualValueOf(NUM(2));
 	});
 
 	test.concurrent('return inside each 2', async () =>
@@ -790,7 +795,7 @@ describe('Return', () => {
 		}
 		<: f()
 		`);
-		eq(res, NUM(1));
+		expect(res).toEqualValueOf(NUM(1));
 	});
 });
 
@@ -801,7 +806,7 @@ describe('type declaration', () => {
 		var xyz: str = "abc"
 		<: [abc, xyz]
 		`);
-		eq(res, ARR([NUM(1), STR('abc')]));
+		expect(res).toEqualValueOf(ARR([NUM(1), STR('abc')]));
 	});
 
 	test.concurrent('fn def', async () => {
@@ -816,7 +821,7 @@ describe('type declaration', () => {
 
 		<: f([1, 2, 3], "a", @(n) { n == 1 })
 		`);
-		eq(res, ARR([NUM(1), NUM(2), NUM(3), NUM(0), NUM(5)]));
+		expect(res).toEqualValueOf(ARR([NUM(1), NUM(2), NUM(3), NUM(0), NUM(5)]));
 	});
 
 	test.concurrent('def (null)', async () => {
@@ -824,7 +829,7 @@ describe('type declaration', () => {
 		let a: null = null
 		<: a
 		`);
-		eq(res, NULL);
+		expect(res).toEqualValueOf(NULL);
 	});
 
 	test.concurrent('fn def (null)', async () => {
@@ -832,7 +837,7 @@ describe('type declaration', () => {
 		@f(): null {}
 		<: f()
 		`);
-		eq(res, NULL);
+		expect(res).toEqualValueOf(NULL);
 	});
 });
 
@@ -848,11 +853,13 @@ describe('Attribute', () => {
 		}
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0] != null)
 		node = nodes[0];
 		if (node.type !== 'def' || node.dest.type !== 'identifier') assert.fail();
 		assert.equal(node.dest.name, 'onRecieved');
 		assert.equal(node.attr.length, 1);
 		// attribute 1
+		assert.ok(node.attr[0] != null);
 		attr = node.attr[0];
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Event');
@@ -873,11 +880,13 @@ describe('Attribute', () => {
 		}
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0] != null);
 		node = nodes[0];
 		if (node.type !== 'def' || node.dest.type !== 'identifier') assert.fail();
 		assert.equal(node.dest.name, 'createNote');
 		assert.equal(node.attr.length, 3);
 		// attribute 1
+		assert.ok(node.attr[0] != null);
 		attr = node.attr[0];
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Endpoint');
@@ -893,12 +902,14 @@ describe('Attribute', () => {
 			}
 		}
 		// attribute 2
+		assert.ok(node.attr[1] != null);
 		attr = node.attr[1];
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Desc');
 		if (attr.value.type !== 'str') assert.fail();
 		assert.equal(attr.value.value, 'Create a note.');
 		// attribute 3
+		assert.ok(node.attr[2] != null);
 		attr = node.attr[2];
 		if (attr.type !== 'attr') assert.fail();
 		assert.equal(attr.name, 'Cat');
@@ -918,11 +929,13 @@ describe('Attribute', () => {
 		let data = 1
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0]);
 		node = nodes[0];
 		if (node.type !== 'def' || node.dest.type !== 'identifier') assert.fail();
 		assert.equal(node.dest.name, 'data');
 		assert.equal(node.attr.length, 1);
 		// attribute 1
+		assert.ok(node.attr[0]);
 		attr = node.attr[0];
 		assert.ok(attr.type === 'attr');
 		assert.equal(attr.name, 'serializable');
@@ -942,10 +955,13 @@ describe('Attribute', () => {
 		`);
 		assert.equal(nodes.length, 1);
 		const ns = nodes[0];
+		assert.ok(ns != null);
 		assert.ok(ns.type === 'ns');
 		const member = ns.members[0];
+		assert.ok(member != null);
 		assert.ok(member.type === 'def');
 		const attr = member.attr[0];
+		assert.ok(attr != null);
 		assert.equal(attr.name, 'test');
 	});
 
@@ -968,6 +984,7 @@ describe('Location', () => {
 			@f(a) { a }
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0] != null);
 		node = nodes[0];
 		if (!node.loc) assert.fail();
 		assert.deepEqual(node.loc, {
@@ -985,6 +1002,7 @@ describe('Location', () => {
 		@f(a) { a }
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0] != null);
 		node = nodes[0];
 		if (!node.loc) assert.fail();
 		assert.deepEqual(node.loc.start, { line: 5, column: 3 });
@@ -996,6 +1014,7 @@ describe('Location', () => {
 			\`hoge{1}fuga\`
 		`);
 		assert.equal(nodes.length, 1);
+		assert.ok(nodes[0] != null);
 		node = nodes[0];
 		if (!node.loc || node.type !== "tmpl") assert.fail();
 		assert.deepEqual(node.loc, {
@@ -1004,14 +1023,17 @@ describe('Location', () => {
 		});
 		assert.equal(node.tmpl.length, 3);
 		const [elem1, elem2, elem3] = node.tmpl as Ast.Expression[];
+		assert.ok(elem1 != null);
 		assert.deepEqual(elem1.loc, {
 			start: { line: 2, column: 4 },
 			end: { line: 2, column: 10 },
 		});
+		assert.ok(elem2 != null);
 		assert.deepEqual(elem2.loc, {
 			start: { line: 2, column: 10 },
 			end: { line: 2, column: 11 },
 		});
+		assert.ok(elem3 != null);
 		assert.deepEqual(elem3.loc, {
 			start: { line: 2, column: 11 },
 			end: { line: 2, column: 17 },
@@ -1024,28 +1046,28 @@ describe('Unicode', () => {
 		const res = await exe(`
 		<: "👍🏽🍆🌮".len
 		`);
-		eq(res, NUM(3));
+		expect(res).toEqualValueOf(NUM(3));
 	});
 
 	test.concurrent('pick', async () => {
 		const res = await exe(`
 		<: "👍🏽🍆🌮".pick(1)
 		`);
-		eq(res, STR('🍆'));
+		expect(res).toEqualValueOf(STR('🍆'));
 	});
 
 	test.concurrent('slice', async () => {
 		const res = await exe(`
 		<: "Emojis 👍🏽 are 🍆 poison. 🌮s are bad.".slice(7, 14)
 		`);
-		eq(res, STR('👍🏽 are 🍆'));
+		expect(res).toEqualValueOf(STR('👍🏽 are 🍆'));
 	});
 
 	test.concurrent('split', async () => {
 		const res = await exe(`
 		<: "👍🏽🍆🌮".split()
 		`);
-		eq(res, ARR([STR('👍🏽'), STR('🍆'), STR('🌮')]));
+		expect(res).toEqualValueOf(ARR([STR('👍🏽'), STR('🍆'), STR('🌮')]));
 	});
 });
 
@@ -1085,14 +1107,14 @@ describe('Security', () => {
 
 		<: obj.prototype
 		`);
-		eq(res2, NULL);
+		expect(res2).toEqualValueOf(NULL);
 
 		const res3 = await exe(`
 		let obj = {}
 
 		<: obj.__proto__
 		`);
-		eq(res3, NULL);
+		expect(res3).toEqualValueOf(NULL);
 	});
 
 	test.concurrent('Cannot access js native property via primitive prop', async () => {
@@ -1139,7 +1161,7 @@ describe('extra', () => {
 		}
 		<: res
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			NUM(1),
 			NUM(2),
 			STR('Fizz'),
@@ -1188,6 +1210,6 @@ describe('extra', () => {
 		let sksik = [s, [k, [s, i]], k]
 		c([sksik, "foo", print])
 		`);
-		eq(res, STR('foo'));
+		expect(res).toEqualValueOf(STR('foo'));
 	});
 });

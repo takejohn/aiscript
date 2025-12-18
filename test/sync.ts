@@ -1,15 +1,14 @@
 /* eslint-disable prefer-const */
 
-import * as assert from 'assert';
-import { describe, test } from 'vitest';
-import { Parser, Interpreter, Ast } from '../src';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
-import { AiScriptSyntaxError, AiScriptRuntimeError, AiScriptIndexOutOfRangeError } from '../src/error';
-import { exeSync, eq } from './testutils';
+import { describe, expect, test } from 'vitest';
+import { Parser, Interpreter, Ast } from '../src/index.js';
+import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
+import { AiScriptSyntaxError, AiScriptRuntimeError, AiScriptIndexOutOfRangeError } from '../src/error.js';
+import { exeSync } from './testutils.js';
 
 test.concurrent('Hello, world!', () => {
 	const res = exeSync('"Hello, world!"');
-	eq(res, STR('Hello, world!'));
+	expect(res).toEqualValueOf(STR('Hello, world!'));
 });
 
 
@@ -24,7 +23,7 @@ test.concurrent('Closure', () => {
 	let s = store("ai")
 	s()
 	`);
-	eq(res, STR('ai'));
+	expect(res).toEqualValueOf(STR('ai'));
 });
 
 test.concurrent('Closure (counter)', () => {
@@ -47,7 +46,7 @@ test.concurrent('Closure (counter)', () => {
 
 	get_count()
 	`);
-	eq(res, NUM(3));
+	expect(res).toEqualValueOf(NUM(3));
 });
 
 describe('extra', () => {
@@ -64,7 +63,7 @@ describe('extra', () => {
 		}
 		res
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			NUM(1),
 			NUM(2),
 			STR('Fizz'),
@@ -120,6 +119,6 @@ describe('extra', () => {
 
 		result
 		`);
-		eq(res, STR('foo'));
+		expect(res).toEqualValueOf(STR('foo'));
 	});
 });

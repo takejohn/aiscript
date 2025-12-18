@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
-import { exe, eq } from './testutils';
+import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value.js';
+import { exe } from './testutils.js';
 
 
 describe('num', () => {
@@ -9,7 +9,7 @@ describe('num', () => {
 		let num = 123
 		<: num.to_str()
 		`);
-		eq(res, STR('123'));
+		expect(res).toEqualValueOf(STR('123'));
 	});
 	test.concurrent('to_hex', async () => {
 		// TODO -0, 巨大数, 無限小数, Infinity等入力時の結果は未定義
@@ -20,7 +20,7 @@ describe('num', () => {
 			0.5,
 		].map(@(v){v.to_hex()})
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			STR('0'), STR('a'), STR('10'),
 			STR('-a'), STR('-10'),
 			STR('0.8'),
@@ -34,7 +34,7 @@ describe('str', () => {
 		let str = "hello"
 		<: str.len
 		`);
-		eq(res, NUM(5));
+		expect(res).toEqualValueOf(NUM(5));
 	});
 
 	test.concurrent('to_num', async () => {
@@ -42,7 +42,7 @@ describe('str', () => {
 		let str = "123"
 		<: str.to_num()
 		`);
-		eq(res, NUM(123));
+		expect(res).toEqualValueOf(NUM(123));
 	});
 
 	test.concurrent('upper', async () => {
@@ -50,7 +50,7 @@ describe('str', () => {
 		let str = "hello"
 		<: str.upper()
 		`);
-		eq(res, STR('HELLO'));
+		expect(res).toEqualValueOf(STR('HELLO'));
 	});
 
 	test.concurrent('lower', async () => {
@@ -58,7 +58,7 @@ describe('str', () => {
 		let str = "HELLO"
 		<: str.lower()
 		`);
-		eq(res, STR('hello'));
+		expect(res).toEqualValueOf(STR('hello'));
 	});
 
 	test.concurrent('trim', async () => {
@@ -66,7 +66,7 @@ describe('str', () => {
 		let str = " hello  "
 		<: str.trim()
 		`);
-		eq(res, STR('hello'));
+		expect(res).toEqualValueOf(STR('hello'));
 	});
 
 	test.concurrent('replace', async () => {
@@ -74,7 +74,7 @@ describe('str', () => {
 		let str = "hello"
 		<: str.replace("l", "x")
 		`);
-		eq(res, STR('hexxo'));
+		expect(res).toEqualValueOf(STR('hexxo'));
 	});
 
 	test.concurrent('index_of', async () => {
@@ -91,7 +91,7 @@ describe('str', () => {
 			str.index_of('3', 10) == -1,
 		].map(@(v){if (v) '1' else '0'}).join()
 		`);
-		eq(res, STR('11111111'));
+		expect(res).toEqualValueOf(STR('11111111'));
 	});
 
 	test.concurrent('incl', async () => {
@@ -99,7 +99,7 @@ describe('str', () => {
 		let str = "hello"
 		<: [str.incl("ll"), str.incl("x")]
 		`);
-		eq(res, ARR([TRUE, FALSE]));
+		expect(res).toEqualValueOf(ARR([TRUE, FALSE]));
 	});
 
 	test.concurrent('split', async () => {
@@ -107,7 +107,7 @@ describe('str', () => {
 		let str = "a,b,c"
 		<: str.split(",")
 		`);
-		eq(res, ARR([STR('a'), STR('b'), STR('c')]));
+		expect(res).toEqualValueOf(ARR([STR('a'), STR('b'), STR('c')]));
 	});
 
 	test.concurrent('pick', async () => {
@@ -115,7 +115,7 @@ describe('str', () => {
 		let str = "hello"
 		<: str.pick(1)
 		`);
-		eq(res, STR('e'));
+		expect(res).toEqualValueOf(STR('e'));
 	});
 
 	test.concurrent('slice', async () => {
@@ -123,7 +123,7 @@ describe('str', () => {
 		let str = "hello"
 		<: str.slice(1, 3)
 		`);
-		eq(res, STR('el'));
+		expect(res).toEqualValueOf(STR('el'));
 	});
 
 	test.concurrent("codepoint_at", async () => {
@@ -131,7 +131,7 @@ describe('str', () => {
 		let str = "𩸽"
 		<: str.codepoint_at(0)
 		`);
-		eq(res, NUM(171581));
+		expect(res).toEqualValueOf(NUM(171581));
 	});
 
 	test.concurrent("to_arr", async () => {
@@ -139,10 +139,7 @@ describe('str', () => {
 		let str = "𩸽👉🏿👨‍👦"
 		<: str.to_arr()
 		`);
-		eq(
-			res,
-			ARR([STR("𩸽"), STR("👉🏿"), STR("👨‍👦")])
-		);
+		expect(res).toEqualValueOf(ARR([STR("𩸽"), STR("👉🏿"), STR("👨‍👦")]));
 	});
 
 	test.concurrent("to_unicode_arr", async () => {
@@ -150,10 +147,7 @@ describe('str', () => {
 		let str = "𩸽👉🏿👨‍👦"
 		<: str.to_unicode_arr()
 		`);
-		eq(
-			res,
-			ARR([STR("𩸽"), STR("👉"), STR(String.fromCodePoint(0x1F3FF)), STR("👨"), STR("\u200d"), STR("👦")])
-		);
+		expect(res).toEqualValueOf(ARR([STR("𩸽"), STR("👉"), STR(String.fromCodePoint(0x1F3FF)), STR("👨"), STR("\u200d"), STR("👦")]));
 	});
 
 	test.concurrent("to_unicode_codepoint_arr", async () => {
@@ -161,10 +155,7 @@ describe('str', () => {
 		let str = "𩸽👉🏿👨‍👦"
 		<: str.to_unicode_codepoint_arr()
 		`);
-		eq(
-			res,
-			ARR([NUM(171581), NUM(128073), NUM(127999), NUM(128104), NUM(8205), NUM(128102)])
-		);
+		expect(res).toEqualValueOf(ARR([NUM(171581), NUM(128073), NUM(127999), NUM(128104), NUM(8205), NUM(128102)]));
 	});
 
 	test.concurrent("to_char_arr", async () => {
@@ -172,10 +163,7 @@ describe('str', () => {
 		let str = "abc𩸽👉🏿👨‍👦def"
 		<: str.to_char_arr()
 		`);
-		eq(
-			res,
-			ARR([97, 98, 99, 55399, 56893, 55357, 56393, 55356, 57343, 55357, 56424, 8205, 55357, 56422, 100, 101, 102].map((s) => STR(String.fromCharCode(s))))
-		);
+		expect(res).toEqualValueOf(ARR([97, 98, 99, 55399, 56893, 55357, 56393, 55356, 57343, 55357, 56424, 8205, 55357, 56422, 100, 101, 102].map((s) => STR(String.fromCharCode(s)))));
 	});
 
 	test.concurrent("to_charcode_arr", async () => {
@@ -183,10 +171,7 @@ describe('str', () => {
 		let str = "abc𩸽👉🏿👨‍👦def"
 		<: str.to_charcode_arr()
 		`);
-		eq(
-			res,
-			ARR([NUM(97), NUM(98), NUM(99), NUM(55399), NUM(56893), NUM(55357), NUM(56393), NUM(55356), NUM(57343), NUM(55357), NUM(56424), NUM(8205), NUM(55357), NUM(56422), NUM(100), NUM(101), NUM(102)])
-		);
+		expect(res).toEqualValueOf(ARR([NUM(97), NUM(98), NUM(99), NUM(55399), NUM(56893), NUM(55357), NUM(56393), NUM(55356), NUM(57343), NUM(55357), NUM(56424), NUM(8205), NUM(55357), NUM(56422), NUM(100), NUM(101), NUM(102)]));
 	});
 
 	test.concurrent("to_utf8_byte_arr", async () => {
@@ -194,10 +179,7 @@ describe('str', () => {
 		let str = "abc𩸽👉🏿👨‍👦def"
 		<: str.to_utf8_byte_arr()
 		`);
-		eq(
-			res,
-			ARR([NUM(97), NUM(98), NUM(99), NUM(240), NUM(169), NUM(184), NUM(189), NUM(240), NUM(159), NUM(145), NUM(137), NUM(240), NUM(159), NUM(143), NUM(191), NUM(240), NUM(159), NUM(145), NUM(168), NUM(226), NUM(128), NUM(141), NUM(240), NUM(159), NUM(145), NUM(166), NUM(100), NUM(101), NUM(102)])
-		);
+		expect(res).toEqualValueOf(ARR([NUM(97), NUM(98), NUM(99), NUM(240), NUM(169), NUM(184), NUM(189), NUM(240), NUM(159), NUM(145), NUM(137), NUM(240), NUM(159), NUM(143), NUM(191), NUM(240), NUM(159), NUM(145), NUM(168), NUM(226), NUM(128), NUM(141), NUM(240), NUM(159), NUM(145), NUM(166), NUM(100), NUM(101), NUM(102)]));
 	});
 
 	test.concurrent('starts_with (no index)', async () => {
@@ -210,7 +192,7 @@ describe('str', () => {
 			empty.starts_with(""), empty.starts_with("he"),
 		]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			TRUE, TRUE,
 			TRUE, FALSE,
 			TRUE, FALSE, 
@@ -231,7 +213,7 @@ describe('str', () => {
 			empty.starts_with("", 2), empty.starts_with("ll", 2),
 		]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			TRUE, TRUE,
 			TRUE, TRUE,
 			TRUE, TRUE,
@@ -252,7 +234,7 @@ describe('str', () => {
 			empty.ends_with(""), empty.ends_with("he"),
 		]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			TRUE, TRUE,
 			TRUE, FALSE,
 			TRUE, FALSE,
@@ -273,7 +255,7 @@ describe('str', () => {
 			empty.ends_with("", 2), empty.ends_with("ll", 2),
 		]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			TRUE, TRUE,
 			TRUE, TRUE,
 			TRUE, TRUE,
@@ -293,7 +275,7 @@ describe('str', () => {
 			str.pad_start(0, "01"), str.pad_start(1, "01"), str.pad_start(2, "01"), str.pad_start(3, "01"), str.pad_start(4, "01"), str.pad_start(5, "01"),
 		]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR(" abc"), STR("  abc"),
 			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR("0abc"), STR("00abc"),
 			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR("0abc"), STR("01abc"),
@@ -309,7 +291,7 @@ describe('str', () => {
 			str.pad_end(0, "01"), str.pad_end(1, "01"), str.pad_end(2, "01"), str.pad_end(3, "01"), str.pad_end(4, "01"), str.pad_end(5, "01"),
 		]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR("abc "), STR("abc  "),
 			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR("abc0"), STR("abc00"),
 			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR("abc0"), STR("abc01"),
@@ -323,7 +305,7 @@ describe('arr', () => {
 		let arr = [1, 2, 3]
 		<: arr.len
 		`);
-		eq(res, NUM(3));
+		expect(res).toEqualValueOf(NUM(3));
 	});
 
 	test.concurrent('push', async () => {
@@ -332,7 +314,7 @@ describe('arr', () => {
 		arr.push(4)
 		<: arr
 		`);
-		eq(res, ARR([NUM(1), NUM(2), NUM(3), NUM(4)]));
+		expect(res).toEqualValueOf(ARR([NUM(1), NUM(2), NUM(3), NUM(4)]));
 	});
 
 	test.concurrent('unshift', async () => {
@@ -341,7 +323,7 @@ describe('arr', () => {
 		arr.unshift(4)
 		<: arr
 		`);
-		eq(res, ARR([NUM(4), NUM(1), NUM(2), NUM(3)]));
+		expect(res).toEqualValueOf(ARR([NUM(4), NUM(1), NUM(2), NUM(3)]));
 	});
 
 	test.concurrent('pop', async () => {
@@ -350,7 +332,7 @@ describe('arr', () => {
 		let popped = arr.pop()
 		<: [popped, arr]
 		`);
-		eq(res, ARR([NUM(3), ARR([NUM(1), NUM(2)])]));
+		expect(res).toEqualValueOf(ARR([NUM(3), ARR([NUM(1), NUM(2)])]));
 	});
 
 	test.concurrent('shift', async () => {
@@ -359,7 +341,7 @@ describe('arr', () => {
 		let shifted = arr.shift()
 		<: [shifted, arr]
 		`);
-		eq(res, ARR([NUM(1), ARR([NUM(2), NUM(3)])]));
+		expect(res).toEqualValueOf(ARR([NUM(1), ARR([NUM(2), NUM(3)])]));
 	});
 
 	test.concurrent('concat', async () => {
@@ -368,7 +350,7 @@ describe('arr', () => {
 		let concated = arr.concat([4, 5])
 		<: [concated, arr]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(1), NUM(2), NUM(3), NUM(4), NUM(5)]),
 			ARR([NUM(1), NUM(2), NUM(3)])
 		]));
@@ -380,7 +362,7 @@ describe('arr', () => {
 		let sliced = arr.slice(2, 4)
 		<: [sliced, arr]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([STR('camel'), STR('duck')]),
 			ARR([STR('ant'), STR('bison'), STR('camel'), STR('duck'), STR('elephant')])
 		]));
@@ -391,7 +373,7 @@ describe('arr', () => {
 		let arr = ["a", "b", "c"]
 		<: arr.join("-")
 		`);
-		eq(res, STR('a-b-c'));
+		expect(res).toEqualValueOf(STR('a-b-c'));
 	});
 
 	test.concurrent('map', async () => {
@@ -399,7 +381,7 @@ describe('arr', () => {
 		let arr = [1, 2, 3]
 		<: arr.map(@(item) { item * 2 })
 		`);
-		eq(res, ARR([NUM(2), NUM(4), NUM(6)]));
+		expect(res).toEqualValueOf(ARR([NUM(2), NUM(4), NUM(6)]));
 	});
 
 	test.concurrent('map with index', async () => {
@@ -407,7 +389,7 @@ describe('arr', () => {
 		let arr = [1, 2, 3]
 		<: arr.map(@(item, index) { item * index })
 		`);
-		eq(res, ARR([NUM(0), NUM(2), NUM(6)]));
+		expect(res).toEqualValueOf(ARR([NUM(0), NUM(2), NUM(6)]));
 	});
 
 	test.concurrent('filter', async () => {
@@ -415,7 +397,7 @@ describe('arr', () => {
 		let arr = [1, 2, 3]
 		<: arr.filter(@(item) { item != 2 })
 		`);
-		eq(res, ARR([NUM(1), NUM(3)]));
+		expect(res).toEqualValueOf(ARR([NUM(1), NUM(3)]));
 	});
 
 	test.concurrent('filter with index', async () => {
@@ -423,7 +405,7 @@ describe('arr', () => {
 		let arr = [1, 2, 3, 4]
 		<: arr.filter(@(item, index) { item != 2 && index != 3 })
 		`);
-		eq(res, ARR([NUM(1), NUM(3)]));
+		expect(res).toEqualValueOf(ARR([NUM(1), NUM(3)]));
 	});
 
 	test.concurrent('reduce', async () => {
@@ -431,7 +413,7 @@ describe('arr', () => {
 		let arr = [1, 2, 3, 4]
 		<: arr.reduce(@(accumulator, currentValue) { (accumulator + currentValue) })
 		`);
-		eq(res, NUM(10));
+		expect(res).toEqualValueOf(NUM(10));
 	});
 
 	test.concurrent('reduce with index', async () => {
@@ -439,7 +421,7 @@ describe('arr', () => {
 		let arr = [1, 2, 3, 4]
 		<: arr.reduce(@(accumulator, currentValue, index) { (accumulator + (currentValue * index)) }, 0)
 		`);
-		eq(res, NUM(20));
+		expect(res).toEqualValueOf(NUM(20));
 	});
 
 	test.concurrent('reduce of empty array without initial value', async () => {
@@ -454,7 +436,7 @@ describe('arr', () => {
 		let arr = ["abc", "def", "ghi"]
 		<: arr.find(@(item) { item.incl("e") })
 		`);
-		eq(res, STR('def'));
+		expect(res).toEqualValueOf(STR('def'));
 	});
 
 	test.concurrent('find with index', async () => {
@@ -462,7 +444,7 @@ describe('arr', () => {
 		let arr = ["abc1", "def1", "ghi1", "abc2", "def2", "ghi2"]
 		<: arr.find(@(item, index) { item.incl("e") && index > 1 })
 		`);
-		eq(res, STR('def2'));
+		expect(res).toEqualValueOf(STR('def2'));
 	});
 
 	test.concurrent('incl', async () => {
@@ -470,7 +452,7 @@ describe('arr', () => {
 		let arr = ["abc", "def", "ghi"]
 		<: [arr.incl("def"), arr.incl("jkl")]
 		`);
-		eq(res, ARR([TRUE, FALSE]));
+		expect(res).toEqualValueOf(ARR([TRUE, FALSE]));
 	});
 
 	test.concurrent('index_of', async () => {
@@ -487,7 +469,7 @@ describe('arr', () => {
 			arr.index_of(3, 10) == -1,
 		].map(@(v){if (v) '1' else '0'}).join()
 		`);
-		eq(res, STR('11111111'));
+		expect(res).toEqualValueOf(STR('11111111'));
 	});
 
 	test.concurrent('reverse', async () => {
@@ -496,7 +478,7 @@ describe('arr', () => {
 		arr.reverse()
 		<: arr
 		`);
-		eq(res, ARR([NUM(3), NUM(2), NUM(1)]));
+		expect(res).toEqualValueOf(ARR([NUM(3), NUM(2), NUM(1)]));
 	});
 
 	test.concurrent('copy', async () => {
@@ -506,7 +488,7 @@ describe('arr', () => {
 		copied.reverse()
 		<: [copied, arr]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(3), NUM(2), NUM(1)]),
 			ARR([NUM(1), NUM(2), NUM(3)])
 		]));
@@ -519,7 +501,7 @@ describe('arr', () => {
 			arr.sort(comp)
 			<: arr
 		`);
-		eq(res, ARR([NUM(2), NUM(3), NUM(10)]));
+		expect(res).toEqualValueOf(ARR([NUM(2), NUM(3), NUM(10)]));
 	});
 
 	test.concurrent('sort string array (with Str:lt)', async () => {
@@ -528,7 +510,7 @@ describe('arr', () => {
 			arr.sort(Str:lt)
 			<: arr
 		`);
-		eq(res, ARR([STR('hoge'), STR('hoge'), STR('huga'), STR('piyo')]));
+		expect(res).toEqualValueOf(ARR([STR('hoge'), STR('hoge'), STR('huga'), STR('piyo')]));
 	});
 
 	test.concurrent('sort string array (with Str:gt)', async () => {
@@ -537,7 +519,7 @@ describe('arr', () => {
 			arr.sort(Str:gt)
 			<: arr
 		`);
-		eq(res, ARR([ STR('piyo'),  STR('huga'), STR('hoge'), STR('hoge')]));
+		expect(res).toEqualValueOf(ARR([ STR('piyo'),  STR('huga'), STR('hoge'), STR('hoge')]));
 	});
 
 	test.concurrent('sort object array', async () => {
@@ -548,7 +530,7 @@ describe('arr', () => {
 			arr.sort(comp)
 			<: arr
 		`);
-		eq(res, ARR([OBJ(new Map([['x', NUM(2)]])), OBJ(new Map([['x', NUM(3)]])), OBJ(new Map([['x', NUM(10)]]))]));
+		expect(res).toEqualValueOf(ARR([OBJ(new Map([['x', NUM(2)]])), OBJ(new Map([['x', NUM(3)]])), OBJ(new Map([['x', NUM(10)]]))]));
 	});
 
 	test.concurrent('sort (stable)', async () => {
@@ -559,7 +541,7 @@ describe('arr', () => {
 			arr.sort(comp)
 			<: arr
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(2), NUM(0)]),
 			ARR([NUM(2), NUM(4)]),
 			ARR([NUM(3), NUM(2)]),
@@ -577,7 +559,7 @@ describe('arr', () => {
 			let arr5 = [0, 1, 2].fill(3, -2, -1)
 			<: [arr1, arr2, arr3, arr4, arr5]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(3), NUM(3), NUM(3)]), //target changed
 			ARR([NUM(3), NUM(3), NUM(3)]),
 			ARR([NUM(0), NUM(3), NUM(3)]),
@@ -593,7 +575,7 @@ describe('arr', () => {
 			let arr3 = arr1.repeat(0)
 			<: [arr1, arr2, arr3]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(0), NUM(1), NUM(2)]), // target not changed
 			ARR([
 				NUM(0), NUM(1), NUM(2),
@@ -610,7 +592,7 @@ describe('arr', () => {
 			let arr2 = arr1.splice(1, 2, [10])
 			<: [arr1, arr2]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(0), NUM(10), NUM(3)]),
 			ARR([NUM(1), NUM(2)]),
 		]));
@@ -622,7 +604,7 @@ describe('arr', () => {
 			let arr2 = arr1.splice(-1, 0, [10, 20])
 			<: [arr1, arr2]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(0), NUM(1), NUM(2), NUM(10), NUM(20), NUM(3)]),
 			ARR([]),
 		]));
@@ -634,7 +616,7 @@ describe('arr', () => {
 			let arr2 = arr1.splice(4, 100, [10, 20])
 			<: [arr1, arr2]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(0), NUM(1), NUM(2), NUM(3), NUM(10), NUM(20)]),
 			ARR([]),
 		]));
@@ -646,7 +628,7 @@ describe('arr', () => {
 			let arr2 = arr1.splice(1)
 			<: [arr1, arr2]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(0)]),
 			ARR([NUM(1), NUM(2), NUM(3)]),
 		]));
@@ -659,7 +641,7 @@ describe('arr', () => {
 			let arr3 = arr1.flat(2)
 			<: [arr1, arr2, arr3]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([
 				NUM(0), ARR([NUM(1)]), ARR([NUM(2), NUM(3)]),
 				ARR([NUM(4), ARR([NUM(5), NUM(6)])])
@@ -682,7 +664,7 @@ describe('arr', () => {
 			let arr3 = arr1.flat_map(@(x){ arr2.map(@(y){ [x, y] }) })
 			<: [arr1, arr3]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(0), NUM(1), NUM(2)]), // target not changed
 			ARR([
 				ARR([NUM(0), STR("a")]),
@@ -703,7 +685,7 @@ describe('arr', () => {
 			let res3 = [].every(@(v,i){false})
 			<: [arr1, res1, res2, res3]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(0), NUM(1), NUM(2), NUM(3)]), // target not changed
 			TRUE,
 			FALSE,
@@ -718,7 +700,7 @@ describe('arr', () => {
 			let res2 = arr1.some(@(v,i){v%2==0 && i > 2})
 			<: [arr1, res1, res2]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(0), NUM(1), NUM(2), NUM(3)]), // target not changed
 			TRUE,
 			FALSE,
@@ -738,7 +720,7 @@ describe('arr', () => {
 			res.push(arr1)
 			<: res
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			NULL, NULL, NULL, NULL, NULL, NULL, 
 			ARR([NUM(30), NUM(0), NUM(1), NUM(50), NUM(20), NUM(2), NUM(40), NUM(10), NUM(60)])
 		]));
@@ -757,7 +739,7 @@ describe('arr', () => {
 			res.push(arr1)
 			<: res
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			NUM(9), NUM(3), NUM(0), NUM(8), NUM(2), NULL, 
 			ARR([NUM(1), NUM(4), NUM(5), NUM(6), NUM(7)])
 		]));
@@ -774,7 +756,7 @@ describe('arr', () => {
 				arr1.at(-6), arr1.at(-5), arr1.at(-4)
 			]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(10), NUM(20), NUM(30)]),
 			NUM(10), NUM(20), NUM(30),
 			NUM(10), NUM(20), NUM(30),
@@ -794,7 +776,7 @@ describe('arr', () => {
 				arr1.at(-6, 100), arr1.at(-5, 100), arr1.at(-4, 100)
 			]
 		`);
-		eq(res, ARR([
+		expect(res).toEqualValueOf(ARR([
 			ARR([NUM(10), NUM(20), NUM(30)]),
 			NUM(10), NUM(20), NUM(30),
 			NUM(10), NUM(20), NUM(30),
