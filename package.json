@@ -33,6 +33,7 @@
 		"api-prod": "npx api-extractor run --verbose",
 		"lint": "eslint .",
 		"test": "vitest run",
+		"test-typecheck": "tsc -p tsconfig.test.json",
 		"pre-release": "node scripts/pre-release.mjs && npm run build",
 		"prepublishOnly": "node scripts/check-release.mjs"
 	},
