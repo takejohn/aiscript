@@ -22,7 +22,6 @@
 	"compileOnSave": false,
 	"include": [
 		"./src/**/*",
-		"./test/**/*",
-		"vitest.d.ts"
+		"./test/**/*"
 	],
 }
