@@ -497,521 +497,100 @@ export class Interpreter {
 		}
 
 		switch (node.type) {
-			case 'call': {
-				const callee = await this._eval(node.target, scope, callStack);
-				if (isControl(callee)) {
-					return callee;
-				}
-				assertFunction(callee);
-				const args = [];
-				for (const expr of node.args) {
-					const arg = await this._eval(expr, scope, callStack);
-					if (isControl(arg)) {
-						return arg;
-					}
-					args.push(arg);
-				}
-				return this._fn(callee, args, callStack, node.loc.start);
-			}
+			case 'call': return await evaluators.callEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'if': {
-				const cond = await this._eval(node.cond, scope, callStack);
-				if (isControl(cond)) {
-					return cond;
-				}
-				assertBoolean(cond);
-				if (cond.value) {
-					return unWrapLabeledBreak(await this._evalClause(node.then, scope, callStack), node.label);
-				}
-				for (const elseif of node.elseif) {
-					const cond = await this._eval(elseif.cond, scope, callStack);
-					if (isControl(cond)) {
-						return cond;
-					}
-					assertBoolean(cond);
-					if (cond.value) {
-						return unWrapLabeledBreak(await this._evalClause(elseif.then, scope, callStack), node.label);
-					}
-				}
-				if (node.else) {
-					return unWrapLabeledBreak(await this._evalClause(node.else, scope, callStack), node.label);
-				}
-				return NULL;
-			}
+			case 'if': return await evaluators.ifEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'match': {
-				const about = await this._eval(node.about, scope, callStack);
-				if (isControl(about)) {
-					return about;
-				}
-				for (const qa of node.qs) {
-					const q = await this._eval(qa.q, scope, callStack);
-					if (isControl(q)) {
-						return q;
-					}
-					if (eq(about, q)) {
-						return unWrapLabeledBreak(await this._evalClause(qa.a, scope, callStack), node.label);
-					}
-				}
-				if (node.default) {
-					return unWrapLabeledBreak(await this._evalClause(node.default, scope, callStack), node.label);
-				}
-				return NULL;
-			}
+			case 'match': return await evaluators.matchEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'loop': {
-				// eslint-disable-next-line no-constant-condition
-				while (true) {
-					const v = await this._run(node.statements, scope.createChildScope(), callStack);
-					if (v.type === 'break') {
-						if (v.label != null && v.label !== node.label) {
-							return v;
-						}
-						break;
-					} else if (v.type === 'continue') {
-						if (v.label != null && v.label !== node.label) {
-							return v;
-						}
-					} else if (v.type === 'return') {
-						return v;
-					}
-				}
-				return NULL;
-			}
+			case 'loop': return await evaluators.loopEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'for': {
-				if (node.times) {
-					const times = await this._eval(node.times, scope, callStack);
-					if (isControl(times)) {
-						return times;
-					}
-					assertNumber(times);
-					for (let i = 0; i < times.value; i++) {
-						const v = await this._evalClause(node.for, scope, callStack);
-						if (v.type === 'break') {
-							if (v.label != null && v.label !== node.label) {
-								return v;
-							}
-							break;
-						} else if (v.type === 'continue') {
-							if (v.label != null && v.label !== node.label) {
-								return v;
-							}
-						} else if (v.type === 'return') {
-							return v;
-						}
-					}
-				} else {
-					const from = await this._eval(node.from!, scope, callStack);
-					if (isControl(from)) {
-						return from;
-					}
-					const to = await this._eval(node.to!, scope, callStack);
-					if (isControl(to)) {
-						return to;
-					}
-					assertNumber(from);
-					assertNumber(to);
-					for (let i = from.value; i < from.value + to.value; i++) {
-						const v = await this._eval(node.for, scope.createChildScope(new Map([
-							[node.var!, {
-								isMutable: false,
-								value: NUM(i),
-							}],
-						])), callStack);
-						if (v.type === 'break') {
-							if (v.label != null && v.label !== node.label) {
-								return v;
-							}
-							break;
-						} else if (v.type === 'continue') {
-							if (v.label != null && v.label !== node.label) {
-								return v;
-							}
-						} else if (v.type === 'return') {
-							return v;
-						}
-					}
-				}
-				return NULL;
-			}
+			case 'for': return await evaluators.forEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'each': {
-				const items = await this._eval(node.items, scope, callStack);
-				if (isControl(items)) {
-					return items;
-				}
-				assertArray(items);
-				for (const item of items.value) {
-					const eachScope = scope.createChildScope();
-					this.define(eachScope, node.var, item, false);
-					const v = await this._eval(node.for, eachScope, callStack);
-					if (v.type === 'break') {
-						if (v.label != null && v.label !== node.label) {
-							return v;
-						}
-						break;
-					} else if (v.type === 'continue') {
-						if (v.label != null && v.label !== node.label) {
-							return v;
-						}
-					} else if (v.type === 'return') {
-						return v;
-					}
-				}
-				return NULL;
-			}
+			case 'each': return await evaluators.eachEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'def': {
-				const value = await this._eval(node.expr, scope, callStack);
-				if (isControl(value)) {
-					return value;
-				}
-				await this.evalAndSetAttr(node.attr, value, scope, callStack);
-				if (
-					node.expr.type === 'fn'
-					&& node.dest.type === 'identifier'
-					&& isFunction(value)
-					&& !value.native
-				) {
-					value.name = node.dest.name;
-				}
-				this.define(scope, node.dest, value, node.mut);
-				return NULL;
-			}
+			case 'def': return await evaluators.defEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'identifier': {
-				return scope.get(node.name);
-			}
+			case 'identifier': return await evaluators.identifierEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'assign': {
-				const target = await this.getReference(node.dest, scope, callStack);
-				if (isControl(target)) {
-					return target;
-				}
-				const v = await this._eval(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
+			case 'assign': return await evaluators.assignEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-				target.set(v);
+			case 'addAssign': return await evaluators.addAssignEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-				return NULL;
-			}
+			case 'subAssign': return await evaluators.subAssignEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'addAssign': {
-				const target = await this.getReference(node.dest, scope, callStack);
-				if (isControl(target)) {
-					return target;
-				}
-				const v = await this._eval(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
-				assertNumber(v);
-				const targetValue = target.get();
-				assertNumber(targetValue);
+			case 'null': return await evaluators.nullEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-				target.set(NUM(targetValue.value + v.value));
-				return NULL;
-			}
+			case 'bool': return await evaluators.boolEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'subAssign': {
-				const target = await this.getReference(node.dest, scope, callStack);
-				if (isControl(target)) {
-					return target;
-				}
-				const v = await this._eval(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
-				assertNumber(v);
-				const targetValue = target.get();
-				assertNumber(targetValue);
+			case 'num': return await evaluators.numEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-				target.set(NUM(targetValue.value - v.value));
-				return NULL;
-			}
+			case 'str': return await evaluators.strEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'null': return NULL;
+			case 'arr': return await evaluators.arrEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'bool': return BOOL(node.value);
+			case 'obj': return await evaluators.objEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'num': return NUM(node.value);
+			case 'prop': return await evaluators.propEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'str': return STR(node.value);
+			case 'index': return await evaluators.indexEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'arr': {
-				const value = [];
-				for (const item of node.value) {
-					const valueItem = await this._eval(item, scope, callStack);
-					if (isControl(valueItem)) {
-						return valueItem;
-					}
-					value.push(valueItem);
-				}
-				return ARR(value);
-			}
+			case 'plus': return await evaluators.plusEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'obj': {
-				const obj = new Map<string, Value>();
-				for (const [key, valueExpr] of node.value) {
-					const value = await this._eval(valueExpr, scope, callStack);
-					if (isControl(value)) {
-						return value;
-					}
-					obj.set(key, value);
-				}
-				return OBJ(obj);
-			}
+			case 'minus': return await evaluators.minusEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'prop': {
-				const target = await this._eval(node.target, scope, callStack);
-				if (isControl(target)) {
-					return target;
-				}
-				if (isObject(target)) {
-					if (target.value.has(node.name)) {
-						return target.value.get(node.name)!;
-					} else {
-						return NULL;
-					}
-				} else {
-					return getPrimProp(target, node.name);
-				}
-			}
+			case 'not': return await evaluators.notEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'index': {
-				const target = await this._eval(node.target, scope, callStack);
-				if (isControl(target)) {
-					return target;
-				}
-				const i = await this._eval(node.index, scope, callStack);
-				if (isControl(i)) {
-					return i;
-				}
-				if (isArray(target)) {
-					assertNumber(i);
-					const item = target.value[i.value];
-					if (item === undefined) {
-						throw new AiScriptIndexOutOfRangeError(`Index out of range. index: ${i.value} max: ${target.value.length - 1}`);
-					}
-					return item;
-				} else if (isObject(target)) {
-					assertString(i);
-					if (target.value.has(i.value)) {
-						return target.value.get(i.value)!;
-					} else {
-						return NULL;
-					}
-				} else {
-					throw new AiScriptRuntimeError(`Cannot read prop (${reprValue(i)}) of ${target.type}.`);
-				}
-			}
+			case 'fn': return await evaluators.fnEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'plus': {
-				const v = await this._eval(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
-				assertNumber(v);
-				return v;
-			}
+			case 'block': return await evaluators.blockEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'minus': {
-				const v = await this._eval(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
-				assertNumber(v);
-				return NUM(-v.value);
-			}
+			case 'exists': return await evaluators.existsEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'not': {
-				const v = await this._eval(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
-				assertBoolean(v);
-				return BOOL(!v.value);
-			}
+			case 'tmpl': return await evaluators.tmplEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'fn': {
-				const params = await Promise.all(node.params.map(async (param) => {
-					return {
-						dest: param.dest,
-						default:
-							param.default ? await this._eval(param.default, scope, callStack) :
-							param.optional ? NULL :
-							undefined,
-						// type: (TODO)
-					};
-				}));
-				const control = params
-					.map((param) => param.default)
-					.filter((value) => value != null)
-					.find(isControl);
-				if (control != null) {
-					return control;
-				}
-				return FN(
-					params as VUserFn['params'],
-					node.children,
-					scope,
-				);
-			}
+			case 'return': return await evaluators.returnEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'block': {
-				return unWrapLabeledBreak(await this._run(node.statements, scope.createChildScope(), callStack), node.label);
-			}
+			case 'break': return await evaluators.breakEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'exists': {
-				return BOOL(scope.exists(node.identifier.name));
-			}
+			case 'continue': return await evaluators.continueEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'tmpl': {
-				let str = '';
-				for (const x of node.tmpl) {
-					if (typeof x === 'string') {
-						str += x;
-					} else {
-						const v = await this._eval(x, scope, callStack);
-						if (isControl(v)) {
-							return v;
-						}
-						str += reprValue(v);
-					}
-				}
-				return STR(str);
-			}
+			case 'ns': return await evaluators.nsEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'return': {
-				const val = await this._eval(node.expr, scope, callStack);
-				if (isControl(val)) {
-					return val;
-				}
-				this.log('block:return', { scope: scope.name, val: val });
-				return RETURN(val);
-			}
+			case 'meta': return await evaluators.metaEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'break': {
-				let val: Value | undefined;
-				if (node.expr != null) {
-					const valueOrControl = await this._eval(node.expr, scope, callStack);
-					if (isControl(valueOrControl)) {
-						return valueOrControl;
-					}
-					val = valueOrControl;
-				}
-				this.log('block:break', { scope: scope.name });
-				return BREAK(node.label, val);
-			}
+			case 'pow': return await evaluators.powEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'continue': {
-				this.log('block:continue', { scope: scope.name });
-				return CONTINUE(node.label);
-			}
+			case 'mul': return await evaluators.mulEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'ns': {
-				return NULL; // nop
-			}
+			case 'div': return await evaluators.divEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'meta': {
-				return NULL; // nop
-			}
+			case 'rem': return await evaluators.remEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'pow': {
-				return this._evalBinaryOperation('Core:pow', node.left, node.right, scope, callStack);
-			}
+			case 'add': return await evaluators.addEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'mul': {
-				return this._evalBinaryOperation('Core:mul', node.left, node.right, scope, callStack);
-			}
+			case 'sub': return await evaluators.subEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'div': {
-				return this._evalBinaryOperation('Core:div', node.left, node.right, scope, callStack);
-			}
+			case 'lt': return await evaluators.ltEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'rem': {
-				return this._evalBinaryOperation('Core:mod', node.left, node.right, scope, callStack);
-			}
+			case 'lteq': return await evaluators.lteqEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'add': {
-				return this._evalBinaryOperation('Core:add', node.left, node.right, scope, callStack);
-			}
+			case 'gt': return await evaluators.gtEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'sub': {
-				return this._evalBinaryOperation('Core:sub', node.left, node.right, scope, callStack);
-			}
+			case 'gteq': return await evaluators.gteqEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'lt': {
-				return this._evalBinaryOperation('Core:lt', node.left, node.right, scope, callStack);
-			}
+			case 'eq': return await evaluators.eqEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'lteq': {
-				return this._evalBinaryOperation('Core:lteq', node.left, node.right, scope, callStack);
-			}
+			case 'neq': return await evaluators.neqEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'gt': {
-				return this._evalBinaryOperation('Core:gt', node.left, node.right, scope, callStack);
-			}
+			case 'and': return await evaluators.andEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
-			case 'gteq': {
-				return this._evalBinaryOperation('Core:gteq', node.left, node.right, scope, callStack);
-			}
-
-			case 'eq': {
-				return this._evalBinaryOperation('Core:eq', node.left, node.right, scope, callStack);
-			}
-
-			case 'neq': {
-				return this._evalBinaryOperation('Core:neq', node.left, node.right, scope, callStack);
-			}
-
-			case 'and': {
-				const leftValue = await this._eval(node.left, scope, callStack);
-				if (isControl(leftValue)) {
-					return leftValue;
-				}
-				assertBoolean(leftValue);
-
-				if (!leftValue.value) {
-					return leftValue;
-				} else {
-					const rightValue = await this._eval(node.right, scope, callStack);
-					if (isControl(rightValue)) {
-						return rightValue;
-					}
-					assertBoolean(rightValue);
-					return rightValue;
-				}
-			}
-
-			case 'or': {
-				const leftValue = await this._eval(node.left, scope, callStack);
-				if (isControl(leftValue)) {
-					return leftValue;
-				}
-				assertBoolean(leftValue);
-
-				if (leftValue.value) {
-					return leftValue;
-				} else {
-					const rightValue = await this._eval(node.right, scope, callStack);
-					if (isControl(rightValue)) {
-						return rightValue;
-					}
-					assertBoolean(rightValue);
-					return rightValue;
-				}
-			}
+			case 'or': return await evaluators.orEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
 			case 'namedTypeSource':
 			case 'fnTypeSource':
 			case 'unionTypeSource':
-			case 'attr': {
-				throw new Error('invalid node type');
-			}
+			case 'attr': return await evaluators.namedTypeSourceFnTypeSourceUnionTypeSourceAttrEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 
 			default: {
 				node satisfies never;
@@ -1030,521 +609,100 @@ export class Interpreter {
 		}
 
 		switch (node.type) {
-			case 'call': {
-				const callee = this._evalSync(node.target, scope, callStack);
-				if (isControl(callee)) {
-					return callee;
-				}
-				assertFunction(callee);
-				const args = [];
-				for (const expr of node.args) {
-					const arg = this._evalSync(expr, scope, callStack);
-					if (isControl(arg)) {
-						return arg;
-					}
-					args.push(arg);
-				}
-				return this._fnSync(callee, args, callStack, node.loc.start);
-			}
+			case 'call': return evaluators.callEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'if': {
-				const cond = this._evalSync(node.cond, scope, callStack);
-				if (isControl(cond)) {
-					return cond;
-				}
-				assertBoolean(cond);
-				if (cond.value) {
-					return unWrapLabeledBreak(this._evalClauseSync(node.then, scope, callStack), node.label);
-				}
-				for (const elseif of node.elseif) {
-					const cond = this._evalSync(elseif.cond, scope, callStack);
-					if (isControl(cond)) {
-						return cond;
-					}
-					assertBoolean(cond);
-					if (cond.value) {
-						return unWrapLabeledBreak(this._evalClauseSync(elseif.then, scope, callStack), node.label);
-					}
-				}
-				if (node.else) {
-					return unWrapLabeledBreak(this._evalClauseSync(node.else, scope, callStack), node.label);
-				}
-				return NULL;
-			}
+			case 'if': return evaluators.ifEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'match': {
-				const about = this._evalSync(node.about, scope, callStack);
-				if (isControl(about)) {
-					return about;
-				}
-				for (const qa of node.qs) {
-					const q = this._evalSync(qa.q, scope, callStack);
-					if (isControl(q)) {
-						return q;
-					}
-					if (eq(about, q)) {
-						return unWrapLabeledBreak(this._evalClauseSync(qa.a, scope, callStack), node.label);
-					}
-				}
-				if (node.default) {
-					return unWrapLabeledBreak(this._evalClauseSync(node.default, scope, callStack), node.label);
-				}
-				return NULL;
-			}
+			case 'match': return evaluators.matchEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'loop': {
-				// eslint-disable-next-line no-constant-condition
-				while (true) {
-					const v = this._runSync(node.statements, scope.createChildScope(), callStack);
-					if (v.type === 'break') {
-						if (v.label != null && v.label !== node.label) {
-							return v;
-						}
-						break;
-					} else if (v.type === 'continue') {
-						if (v.label != null && v.label !== node.label) {
-							return v;
-						}
-					} else if (v.type === 'return') {
-						return v;
-					}
-				}
-				return NULL;
-			}
+			case 'loop': return evaluators.loopEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'for': {
-				if (node.times) {
-					const times = this._evalSync(node.times, scope, callStack);
-					if (isControl(times)) {
-						return times;
-					}
-					assertNumber(times);
-					for (let i = 0; i < times.value; i++) {
-						const v = this._evalClauseSync(node.for, scope, callStack);
-						if (v.type === 'break') {
-							if (v.label != null && v.label !== node.label) {
-								return v;
-							}
-							break;
-						} else if (v.type === 'continue') {
-							if (v.label != null && v.label !== node.label) {
-								return v;
-							}
-						} else if (v.type === 'return') {
-							return v;
-						}
-					}
-				} else {
-					const from = this._evalSync(node.from!, scope, callStack);
-					if (isControl(from)) {
-						return from;
-					}
-					const to = this._evalSync(node.to!, scope, callStack);
-					if (isControl(to)) {
-						return to;
-					}
-					assertNumber(from);
-					assertNumber(to);
-					for (let i = from.value; i < from.value + to.value; i++) {
-						const v = this._evalSync(node.for, scope.createChildScope(new Map([
-							[node.var!, {
-								isMutable: false,
-								value: NUM(i),
-							}],
-						])), callStack);
-						if (v.type === 'break') {
-							if (v.label != null && v.label !== node.label) {
-								return v;
-							}
-							break;
-						} else if (v.type === 'continue') {
-							if (v.label != null && v.label !== node.label) {
-								return v;
-							}
-						} else if (v.type === 'return') {
-							return v;
-						}
-					}
-				}
-				return NULL;
-			}
+			case 'for': return evaluators.forEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'each': {
-				const items = this._evalSync(node.items, scope, callStack);
-				if (isControl(items)) {
-					return items;
-				}
-				assertArray(items);
-				for (const item of items.value) {
-					const eachScope = scope.createChildScope();
-					this.define(eachScope, node.var, item, false);
-					const v = this._evalSync(node.for, eachScope, callStack);
-					if (v.type === 'break') {
-						if (v.label != null && v.label !== node.label) {
-							return v;
-						}
-						break;
-					} else if (v.type === 'continue') {
-						if (v.label != null && v.label !== node.label) {
-							return v;
-						}
-					} else if (v.type === 'return') {
-						return v;
-					}
-				}
-				return NULL;
-			}
+			case 'each': return evaluators.eachEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'def': {
-				const value = this._evalSync(node.expr, scope, callStack);
-				if (isControl(value)) {
-					return value;
-				}
-				this.evalAndSetAttrSync(node.attr, value, scope, callStack);
-				if (
-					node.expr.type === 'fn'
-					&& node.dest.type === 'identifier'
-					&& isFunction(value)
-					&& !value.native
-				) {
-					value.name = node.dest.name;
-				}
-				this.define(scope, node.dest, value, node.mut);
-				return NULL;
-			}
+			case 'def': return evaluators.defEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'identifier': {
-				return scope.get(node.name);
-			}
+			case 'identifier': return evaluators.identifierEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'assign': {
-				const target = this.getReferenceSync(node.dest, scope, callStack);
-				if (isControl(target)) {
-					return target;
-				}
-				const v = this._evalSync(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
+			case 'assign': return evaluators.assignEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-				target.set(v);
+			case 'addAssign': return evaluators.addAssignEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-				return NULL;
-			}
+			case 'subAssign': return evaluators.subAssignEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'addAssign': {
-				const target = this.getReferenceSync(node.dest, scope, callStack);
-				if (isControl(target)) {
-					return target;
-				}
-				const v = this._evalSync(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
-				assertNumber(v);
-				const targetValue = target.get();
-				assertNumber(targetValue);
+			case 'null': return evaluators.nullEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-				target.set(NUM(targetValue.value + v.value));
-				return NULL;
-			}
+			case 'bool': return evaluators.boolEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'subAssign': {
-				const target = this.getReferenceSync(node.dest, scope, callStack);
-				if (isControl(target)) {
-					return target;
-				}
-				const v = this._evalSync(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
-				assertNumber(v);
-				const targetValue = target.get();
-				assertNumber(targetValue);
+			case 'num': return evaluators.numEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-				target.set(NUM(targetValue.value - v.value));
-				return NULL;
-			}
+			case 'str': return evaluators.strEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'null': return NULL;
+			case 'arr': return evaluators.arrEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'bool': return BOOL(node.value);
+			case 'obj': return evaluators.objEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'num': return NUM(node.value);
+			case 'prop': return evaluators.propEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'str': return STR(node.value);
+			case 'index': return evaluators.indexEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'arr': {
-				const value = [];
-				for (const item of node.value) {
-					const valueItem = this._evalSync(item, scope, callStack);
-					if (isControl(valueItem)) {
-						return valueItem;
-					}
-					value.push(valueItem);
-				}
-				return ARR(value);
-			}
+			case 'plus': return evaluators.plusEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'obj': {
-				const obj = new Map<string, Value>();
-				for (const [key, valueExpr] of node.value) {
-					const value = this._evalSync(valueExpr, scope, callStack);
-					if (isControl(value)) {
-						return value;
-					}
-					obj.set(key, value);
-				}
-				return OBJ(obj);
-			}
+			case 'minus': return evaluators.minusEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'prop': {
-				const target = this._evalSync(node.target, scope, callStack);
-				if (isControl(target)) {
-					return target;
-				}
-				if (isObject(target)) {
-					if (target.value.has(node.name)) {
-						return target.value.get(node.name)!;
-					} else {
-						return NULL;
-					}
-				} else {
-					return getPrimProp(target, node.name);
-				}
-			}
+			case 'not': return evaluators.notEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'index': {
-				const target = this._evalSync(node.target, scope, callStack);
-				if (isControl(target)) {
-					return target;
-				}
-				const i = this._evalSync(node.index, scope, callStack);
-				if (isControl(i)) {
-					return i;
-				}
-				if (isArray(target)) {
-					assertNumber(i);
-					const item = target.value[i.value];
-					if (item === undefined) {
-						throw new AiScriptIndexOutOfRangeError(`Index out of range. index: ${i.value} max: ${target.value.length - 1}`);
-					}
-					return item;
-				} else if (isObject(target)) {
-					assertString(i);
-					if (target.value.has(i.value)) {
-						return target.value.get(i.value)!;
-					} else {
-						return NULL;
-					}
-				} else {
-					throw new AiScriptRuntimeError(`Cannot read prop (${reprValue(i)}) of ${target.type}.`);
-				}
-			}
+			case 'fn': return evaluators.fnEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'plus': {
-				const v = this._evalSync(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
-				assertNumber(v);
-				return v;
-			}
+			case 'block': return evaluators.blockEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'minus': {
-				const v = this._evalSync(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
-				assertNumber(v);
-				return NUM(-v.value);
-			}
+			case 'exists': return evaluators.existsEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'not': {
-				const v = this._evalSync(node.expr, scope, callStack);
-				if (isControl(v)) {
-					return v;
-				}
-				assertBoolean(v);
-				return BOOL(!v.value);
-			}
+			case 'tmpl': return evaluators.tmplEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'fn': {
-				const params = node.params.map((param) => {
-					return {
-						dest: param.dest,
-						default:
-							param.default ? this._evalSync(param.default, scope, callStack) :
-							param.optional ? NULL :
-							undefined,
-						// type: (TODO)
-					};
-				});
-				const control = params
-					.map((param) => param.default)
-					.filter((value) => value != null)
-					.find(isControl);
-				if (control != null) {
-					return control;
-				}
-				return FN(
-					params as VUserFn['params'],
-					node.children,
-					scope,
-				);
-			}
+			case 'return': return evaluators.returnEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'block': {
-				return unWrapLabeledBreak(this._runSync(node.statements, scope.createChildScope(), callStack), node.label);
-			}
+			case 'break': return evaluators.breakEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'exists': {
-				return BOOL(scope.exists(node.identifier.name));
-			}
+			case 'continue': return evaluators.continueEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'tmpl': {
-				let str = '';
-				for (const x of node.tmpl) {
-					if (typeof x === 'string') {
-						str += x;
-					} else {
-						const v = this._evalSync(x, scope, callStack);
-						if (isControl(v)) {
-							return v;
-						}
-						str += reprValue(v);
-					}
-				}
-				return STR(str);
-			}
+			case 'ns': return evaluators.nsEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'return': {
-				const val = this._evalSync(node.expr, scope, callStack);
-				if (isControl(val)) {
-					return val;
-				}
-				this.log('block:return', { scope: scope.name, val: val });
-				return RETURN(val);
-			}
+			case 'meta': return evaluators.metaEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'break': {
-				let val: Value | undefined;
-				if (node.expr != null) {
-					const valueOrControl = this._evalSync(node.expr, scope, callStack);
-					if (isControl(valueOrControl)) {
-						return valueOrControl;
-					}
-					val = valueOrControl;
-				}
-				this.log('block:break', { scope: scope.name });
-				return BREAK(node.label, val);
-			}
+			case 'pow': return evaluators.powEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'continue': {
-				this.log('block:continue', { scope: scope.name });
-				return CONTINUE(node.label);
-			}
+			case 'mul': return evaluators.mulEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'ns': {
-				return NULL; // nop
-			}
+			case 'div': return evaluators.divEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'meta': {
-				return NULL; // nop
-			}
+			case 'rem': return evaluators.remEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'pow': {
-				return this._evalBinaryOperationSync('Core:pow', node.left, node.right, scope, callStack);
-			}
+			case 'add': return evaluators.addEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'mul': {
-				return this._evalBinaryOperationSync('Core:mul', node.left, node.right, scope, callStack);
-			}
+			case 'sub': return evaluators.subEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'div': {
-				return this._evalBinaryOperationSync('Core:div', node.left, node.right, scope, callStack);
-			}
+			case 'lt': return evaluators.ltEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'rem': {
-				return this._evalBinaryOperationSync('Core:mod', node.left, node.right, scope, callStack);
-			}
+			case 'lteq': return evaluators.lteqEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'add': {
-				return this._evalBinaryOperationSync('Core:add', node.left, node.right, scope, callStack);
-			}
+			case 'gt': return evaluators.gtEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'sub': {
-				return this._evalBinaryOperationSync('Core:sub', node.left, node.right, scope, callStack);
-			}
+			case 'gteq': return evaluators.gteqEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'lt': {
-				return this._evalBinaryOperationSync('Core:lt', node.left, node.right, scope, callStack);
-			}
+			case 'eq': return evaluators.eqEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'lteq': {
-				return this._evalBinaryOperationSync('Core:lteq', node.left, node.right, scope, callStack);
-			}
+			case 'neq': return evaluators.neqEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'gt': {
-				return this._evalBinaryOperationSync('Core:gt', node.left, node.right, scope, callStack);
-			}
+			case 'and': return evaluators.andEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
-			case 'gteq': {
-				return this._evalBinaryOperationSync('Core:gteq', node.left, node.right, scope, callStack);
-			}
-
-			case 'eq': {
-				return this._evalBinaryOperationSync('Core:eq', node.left, node.right, scope, callStack);
-			}
-
-			case 'neq': {
-				return this._evalBinaryOperationSync('Core:neq', node.left, node.right, scope, callStack);
-			}
-
-			case 'and': {
-				const leftValue = this._evalSync(node.left, scope, callStack);
-				if (isControl(leftValue)) {
-					return leftValue;
-				}
-				assertBoolean(leftValue);
-
-				if (!leftValue.value) {
-					return leftValue;
-				} else {
-					const rightValue = this._evalSync(node.right, scope, callStack);
-					if (isControl(rightValue)) {
-						return rightValue;
-					}
-					assertBoolean(rightValue);
-					return rightValue;
-				}
-			}
-
-			case 'or': {
-				const leftValue = this._evalSync(node.left, scope, callStack);
-				if (isControl(leftValue)) {
-					return leftValue;
-				}
-				assertBoolean(leftValue);
-
-				if (leftValue.value) {
-					return leftValue;
-				} else {
-					const rightValue = this._evalSync(node.right, scope, callStack);
-					if (isControl(rightValue)) {
-						return rightValue;
-					}
-					assertBoolean(rightValue);
-					return rightValue;
-				}
-			}
+			case 'or': return evaluators.orEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
 			case 'namedTypeSource':
 			case 'fnTypeSource':
 			case 'unionTypeSource':
-			case 'attr': {
-				throw new Error('invalid node type');
-			}
+			case 'attr': return evaluators.namedTypeSourceFnTypeSourceUnionTypeSourceAttrEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
 
 			default: {
 				node satisfies never;
