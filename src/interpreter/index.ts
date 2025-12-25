@@ -16,17 +16,7 @@ import { Variable } from './variable.js';
 import { Reference } from './reference.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn, VUserFn } from './value.js';
-
-export type LogObject = {
-	scope?: string;
-	var?: string;
-	val?: Value | Variable;
-};
-
-type CallInfo = {
-	name: string;
-	pos: Ast.Pos | undefined;
-};
+import type { AsyncEvaluationContext, CallInfo, LogObject, SyncEvaluationContext } from './evaluation.js';
 
 export class Interpreter {
 	public stepCount = 0;
@@ -39,6 +29,28 @@ export class Interpreter {
 	private vars: Record<string, Variable> = {};
 	private irqRate: number;
 	private irqSleep: () => Promise<void>;
+	private asyncEvaluationContext: AsyncEvaluationContext = {
+		define: this.define,
+		log: this.log,
+		_eval: this._eval,
+		_evalBinaryOperation: this._evalBinaryOperation,
+		_evalClause: this._evalClause,
+		_fn: this._fn,
+		_run: this._run,
+		evalAndSetAttr: this.evalAndSetAttr,
+		getReference: this.getReference,
+	};
+	private syncEvaluationContext: SyncEvaluationContext = {
+		define: this.define,
+		log: this.log,
+		_evalSync: this._evalSync,
+		_evalBinaryOperationSync: this._evalBinaryOperationSync,
+		_evalClauseSync: this._evalClauseSync,
+		_fnSync: this._fnSync,
+		_runSync: this._runSync,
+		evalAndSetAttrSync: this.evalAndSetAttrSync,
+		getReferenceSync: this.getReferenceSync,
+	};
 
 	constructor(
 		consts: Record<string, Value>,
