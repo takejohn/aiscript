@@ -17,6 +17,7 @@ import { Reference } from './reference.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn, VUserFn } from './value.js';
 import type { AsyncEvaluationContext, CallInfo, LogObject, SyncEvaluationContext } from './evaluation.js';
+import * as evaluators from './evaluators.js';
 
 export class Interpreter {
 	public stepCount = 0;
