@@ -28,7 +28,6 @@ interface EvaluationContext {
 
 export interface AsyncEvaluationContext extends EvaluationContext {
 	_eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control>;
-	_evalBinaryOperation(op: string, leftExpr: Ast.Expression, rightExpr: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control>;
 	_evalClause(node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control>;
 	_fn(fn: VFn, args: Value[], callStack: readonly CallInfo[], pos?: Ast.Pos): Promise<Value>;
 	_run(program: Ast.Node[], scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control>;
@@ -38,7 +37,6 @@ export interface AsyncEvaluationContext extends EvaluationContext {
 
 export interface SyncEvaluationContext extends EvaluationContext {
 	_evalSync(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Value | Control;
-	_evalBinaryOperationSync(op: string, leftExpr: Ast.Expression, rightExpr: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Value | Control;
 	_evalClauseSync(node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Value | Control;
 	_fnSync(fn: VFn, args: Value[], callStack: readonly CallInfo[], pos?: Ast.Pos): Value;
 	_runSync(program: Ast.Node[], scope: Scope, callStack: readonly CallInfo[]): Value | Control;
