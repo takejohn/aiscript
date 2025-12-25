@@ -31,6 +31,5 @@ export { nsEvaluator } from './evaluators/ns.js';
 export { metaEvaluator } from './evaluators/meta.js';
 export { andEvaluator } from './evaluators/and.js';
 export { orEvaluator } from './evaluators/or.js';
-export { namedTypeSourceFnTypeSourceUnionTypeSourceAttrEvaluator } from './evaluators/namedTypeSourceFnTypeSourceUnionTypeSourceAttr.js';
 
 export * from './evaluators/binaryOperation.js';

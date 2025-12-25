@@ -587,7 +587,9 @@ export class Interpreter {
 			case 'namedTypeSource':
 			case 'fnTypeSource':
 			case 'unionTypeSource':
-			case 'attr': return await evaluators.namedTypeSourceFnTypeSourceUnionTypeSourceAttrEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
+			case 'attr': {
+				throw new Error('invalid node type');
+			}
 
 			default: {
 				node satisfies never;
@@ -699,7 +701,9 @@ export class Interpreter {
 			case 'namedTypeSource':
 			case 'fnTypeSource':
 			case 'unionTypeSource':
-			case 'attr': return evaluators.namedTypeSourceFnTypeSourceUnionTypeSourceAttrEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
+			case 'attr': {
+				throw new Error('invalid node type');
+			}
 
 			default: {
 				node satisfies never;
