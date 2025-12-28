@@ -426,36 +426,6 @@ export class Interpreter {
 	}
 
 	@autobind
-	private async _evalBinaryOperation(op: string, leftExpr: Ast.Expression, rightExpr: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const callee = scope.get(op);
-		assertFunction(callee);
-		const left = await this._eval(leftExpr, scope, callStack);
-		if (isControl(left)) {
-			return left;
-		}
-		const right = await this._eval(rightExpr, scope, callStack);
-		if (isControl(right)) {
-			return right;
-		}
-		return this._fn(callee, [left, right], callStack);
-	}
-
-	@autobind
-	private _evalBinaryOperationSync(op: string, leftExpr: Ast.Expression, rightExpr: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const callee = scope.get(op);
-		assertFunction(callee);
-		const left = this._evalSync(leftExpr, scope, callStack);
-		if (isControl(left)) {
-			return left;
-		}
-		const right = this._evalSync(rightExpr, scope, callStack);
-		if (isControl(right)) {
-			return right;
-		}
-		return this._fnSync(callee, [left, right], callStack);
-	}
-
-	@autobind
 	private _eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
 		return this.__eval(node, scope, callStack).catch(e => {
 			if (e.pos) throw e;
