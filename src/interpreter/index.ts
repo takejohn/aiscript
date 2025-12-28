@@ -17,6 +17,7 @@ import * as evaluators from './evaluators.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn } from './value.js';
 import type { AsyncEvaluationContext, CallInfo, LogObject, SyncEvaluationContext } from './evaluation.js';
+import { evalAsync, evalSync } from './evaluators.js';
 
 export class Interpreter {
 	public stepCount = 0;
@@ -493,109 +494,7 @@ export class Interpreter {
 			throw new AiScriptRuntimeError('max step exceeded');
 		}
 
-		switch (node.type) {
-			case 'call': return await evaluators.callEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'if': return await evaluators.ifEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'match': return await evaluators.matchEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'loop': return await evaluators.loopEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'for': return await evaluators.forEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'each': return await evaluators.eachEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'def': return await evaluators.defEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'identifier': return await evaluators.identifierEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'assign': return await evaluators.assignEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'addAssign': return await evaluators.addAssignEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'subAssign': return await evaluators.subAssignEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'null': return await evaluators.nullEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'bool': return await evaluators.boolEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'num': return await evaluators.numEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'str': return await evaluators.strEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'arr': return await evaluators.arrEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'obj': return await evaluators.objEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'prop': return await evaluators.propEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'index': return await evaluators.indexEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'plus': return await evaluators.plusEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'minus': return await evaluators.minusEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'not': return await evaluators.notEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'fn': return await evaluators.fnEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'block': return await evaluators.blockEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'exists': return await evaluators.existsEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'tmpl': return await evaluators.tmplEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'return': return await evaluators.returnEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'break': return await evaluators.breakEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'continue': return await evaluators.continueEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'ns': return await evaluators.nsEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'meta': return await evaluators.metaEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'pow': return await evaluators.powEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'mul': return await evaluators.mulEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'div': return await evaluators.divEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'rem': return await evaluators.remEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'add': return await evaluators.addEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'sub': return await evaluators.subEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'lt': return await evaluators.ltEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'lteq': return await evaluators.lteqEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'gt': return await evaluators.gtEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'gteq': return await evaluators.gteqEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'eq': return await evaluators.eqEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'neq': return await evaluators.neqEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'and': return await evaluators.andEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'or': return await evaluators.orEvaluator.evalAsync(this.asyncEvaluationContext, node, scope, callStack);
-
-			case 'namedTypeSource':
-			case 'fnTypeSource':
-			case 'unionTypeSource':
-			case 'attr': {
-				throw new Error('invalid node type');
-			}
-
-			default: {
-				node satisfies never;
-				throw new Error('invalid node type');
-			}
-		}
+		return await evalAsync(this.asyncEvaluationContext, node, scope, callStack);
 	}
 	
 	@autobind
@@ -607,109 +506,7 @@ export class Interpreter {
 			throw new AiScriptRuntimeError('max step exceeded');
 		}
 
-		switch (node.type) {
-			case 'call': return evaluators.callEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'if': return evaluators.ifEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'match': return evaluators.matchEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'loop': return evaluators.loopEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'for': return evaluators.forEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'each': return evaluators.eachEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'def': return evaluators.defEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'identifier': return evaluators.identifierEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'assign': return evaluators.assignEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'addAssign': return evaluators.addAssignEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'subAssign': return evaluators.subAssignEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'null': return evaluators.nullEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'bool': return evaluators.boolEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'num': return evaluators.numEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'str': return evaluators.strEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'arr': return evaluators.arrEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'obj': return evaluators.objEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'prop': return evaluators.propEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'index': return evaluators.indexEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'plus': return evaluators.plusEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'minus': return evaluators.minusEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'not': return evaluators.notEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'fn': return evaluators.fnEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'block': return evaluators.blockEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'exists': return evaluators.existsEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'tmpl': return evaluators.tmplEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'return': return evaluators.returnEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'break': return evaluators.breakEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'continue': return evaluators.continueEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'ns': return evaluators.nsEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'meta': return evaluators.metaEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'pow': return evaluators.powEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'mul': return evaluators.mulEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'div': return evaluators.divEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'rem': return evaluators.remEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'add': return evaluators.addEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'sub': return evaluators.subEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'lt': return evaluators.ltEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'lteq': return evaluators.lteqEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'gt': return evaluators.gtEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'gteq': return evaluators.gteqEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'eq': return evaluators.eqEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'neq': return evaluators.neqEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'and': return evaluators.andEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'or': return evaluators.orEvaluator.evalSync(this.syncEvaluationContext, node, scope, callStack);
-
-			case 'namedTypeSource':
-			case 'fnTypeSource':
-			case 'unionTypeSource':
-			case 'attr': {
-				throw new Error('invalid node type');
-			}
-
-			default: {
-				node satisfies never;
-				throw new Error('invalid node type');
-			}
-		}
+		return evalSync(this.syncEvaluationContext, node, scope, callStack);
 	}
 
 	@autobind
