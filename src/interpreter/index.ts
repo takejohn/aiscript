@@ -9,15 +9,14 @@ import { nodeToJs } from '../utils/node-to-js.js';
 import { Scope } from './scope.js';
 import { std } from './lib/std.js';
 import { unWrapRet, assertValue, isControl, type Control } from './control.js';
-import { assertNumber, assertString, assertFunction, assertObject, assertArray, isObject, isArray, expectAny, reprValue, isFunction } from './util.js';
+import { assertNumber, assertString, assertObject, assertArray, isObject, isArray, expectAny, reprValue, isFunction } from './util.js';
 import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
 import { Reference } from './reference.js';
-import * as evaluators from './evaluator/index.js';
+import { evalAsync, evalSync } from './evaluator/index.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn } from './value.js';
 import type { AsyncEvaluationContext, CallInfo, LogObject, SyncEvaluationContext } from './evaluator/evaluation.js';
-import { evalAsync, evalSync } from './evaluator/index.js';
 
 export class Interpreter {
 	public stepCount = 0;
