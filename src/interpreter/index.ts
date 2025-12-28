@@ -13,11 +13,11 @@ import { assertNumber, assertString, assertFunction, assertObject, assertArray, 
 import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
 import { Reference } from './reference.js';
-import * as evaluators from './evaluators.js';
+import * as evaluators from './evaluator/index.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn } from './value.js';
-import type { AsyncEvaluationContext, CallInfo, LogObject, SyncEvaluationContext } from './evaluation.js';
-import { evalAsync, evalSync } from './evaluators.js';
+import type { AsyncEvaluationContext, CallInfo, LogObject, SyncEvaluationContext } from './evaluator/evaluation.js';
+import { evalAsync, evalSync } from './evaluator/index.js';
 
 export class Interpreter {
 	public stepCount = 0;
