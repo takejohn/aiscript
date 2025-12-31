@@ -3,7 +3,7 @@ import { assertBoolean } from '../../util.js';
 import type { Scope } from '../../scope.js';
 import type * as Ast from '../../../node.js';
 import type { Value } from '../../value.js';
-import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from '../evaluation.js';
+import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from '../context.js';
 
 export const orEvaluator: Evaluator<Ast.Node & { type: 'or' }> = {
 	async evalAsync(context: AsyncEvaluationContext, node: Ast.Node & { type: 'or' }, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {

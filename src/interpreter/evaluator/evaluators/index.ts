@@ -5,7 +5,7 @@ import { NULL } from '../../value.js';
 import type { Scope } from '../../scope.js';
 import type * as Ast from '../../../node.js';
 import type { Value } from '../../value.js';
-import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from '../evaluation.js';
+import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from '../context.js';
 
 export const indexEvaluator: Evaluator<Ast.Node & { type: 'index' }> = {
 	async evalAsync(context: AsyncEvaluationContext, node: Ast.Node & { type: 'index' }, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {

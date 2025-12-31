@@ -46,7 +46,7 @@ import {
 import { andEvaluator } from './evaluators/and.js';
 import { orEvaluator } from './evaluators/or.js';
 
-import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from './evaluation.js';
+import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from './context.js';
 import type { Control } from '../control.js';
 import type * as Ast from '../../node.js';
 import type { Value } from '../value.js';

@@ -2,7 +2,7 @@ import { isControl } from '../../control.js';
 import { assertFunction } from '../../util.js';
 import type { Value, VFn } from '../../value.js';
 import type { Control } from '../../control.js';
-import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from '../evaluation.js';
+import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from '../context.js';
 import type { Ast, Scope } from '../../../index.js';
 
 type BinaryOperationNode = Ast.Expression & {

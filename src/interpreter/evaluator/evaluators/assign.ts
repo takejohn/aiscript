@@ -3,7 +3,7 @@ import { NULL } from '../../value.js';
 import type { Scope } from '../../scope.js';
 import type * as Ast from '../../../node.js';
 import type { Value } from '../../value.js';
-import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from '../evaluation.js';
+import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from '../context.js';
 
 export const assignEvaluator: Evaluator<Ast.Node & { type: 'assign' }> = {
 	async evalAsync(context: AsyncEvaluationContext, node: Ast.Node & { type: 'assign' }, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {

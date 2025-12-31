@@ -4,7 +4,7 @@ import { NUM } from '../../value.js';
 import type { Scope } from '../../scope.js';
 import type * as Ast from '../../../node.js';
 import type { Value } from '../../value.js';
-import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from '../evaluation.js';
+import type { AsyncEvaluationContext, CallInfo, Evaluator, SyncEvaluationContext } from '../context.js';
 
 export const minusEvaluator: Evaluator<Ast.Node & { type: 'minus' }> = {
 	async evalAsync(context: AsyncEvaluationContext, node: Ast.Node & { type: 'minus' }, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {

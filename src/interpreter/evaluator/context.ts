@@ -2,14 +2,8 @@ import type { Control } from '../control.js';
 import type * as Ast from '../../node.js';
 import type { Value, VFn } from '../value.js';
 import type { Scope } from '../scope.js';
-import type { Variable } from '../variable.js';
 import type { Reference } from '../reference.js';
-
-export type LogObject = {
-	scope?: string;
-	var?: string;
-	val?: Value | Variable;
-};
+import type { LogObject } from '../log.js';
 
 export type CallInfo = {
 	name: string;
