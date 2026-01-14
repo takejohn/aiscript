@@ -2,7 +2,7 @@ import { AiScriptError, AiScriptHostsideError, NonAiScriptError } from '../error
 import { Interpreter } from '../interpreter/index.js';
 import type { Input, Method, MethodInit, Output, Request, Response, TransferableAiScriptError } from './protocol.js';
 
-class LazyInterpreter {
+class DeferredInterpreter {
 	private inner: Interpreter | undefined;
 
 	public get value(): Interpreter {
@@ -24,7 +24,7 @@ class LazyInterpreter {
 	}
 }
 
-const interpreter = new LazyInterpreter();
+const interpreter = new DeferredInterpreter();
 
 self.addEventListener('message', async (event: MessageEvent<Input>) => {
 	const data = event.data;
