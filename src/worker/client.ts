@@ -2,23 +2,27 @@ import type { AiScriptError } from '../error.js';
 import type { LogObject } from '../interpreter/index.js';
 import type { Value } from '../interpreter/value.js';
 
-export class RemoteInterpreter {
+export class WorkerInterpreter {
 	private worker: Worker;
 
-	private constructor(
+	private constructor(worker: Worker) {
+		this.worker = worker;
+	}
+
+	public static async create(
 		consts: Record<string, Value>,
-		private opts: {
+		opts: {
 			in?(q: string): Promise<string>;
 			out?(value: Value): void;
 			err?(e: AiScriptError): void;
 			log?(type: string, params: LogObject): void;
 			maxStep?: number;
 			abortOnError?: boolean;
-			irqRate?: number;
-			irqSleep?: number | (() => Promise<void>);
 		} = {},
-	) {
+	): Promise<WorkerInterpreter> {
 		const url = new URL('./server.js', import.meta.url);
-		this.worker = new Worker(url, { type: 'module' });
+		const worker = new Worker(url, { type: 'module' });
+		// TODO: 引数をWorkerに送信
+		return new WorkerInterpreter(worker);
 	}
 }
