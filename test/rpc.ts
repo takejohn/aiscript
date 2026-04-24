@@ -11,6 +11,10 @@ describe('RPC', () => {
 			return a - b;
 		},
 
+		async identical<T>(x: T): Promise<T> {
+			return x;
+		},
+
 		async rpcError(): Promise<never> {
 			throw new RPCError({ message: 'error message' });
 		},
@@ -46,6 +50,12 @@ describe('RPC', () => {
 			client.methods.subtract(3, 4),
 			client.methods.add(5, 6),
 		])).resolves.toStrictEqual([3, -1, 11]);
+	});
+
+	test.concurrent('generic', async () => {
+		const { client } = createServerClient();
+		const res: number = await client.methods.identical(42);
+		expect(res).toBe(42);
 	});
 
 	test.concurrent('error', async () => {

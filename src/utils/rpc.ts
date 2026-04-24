@@ -40,7 +40,7 @@ type UnknownErrorDetail = {
 
 type Awaitable<T> = T | PromiseLike<Awaitable<T>>;
 
-type MethodsBase = {
+export type MethodsBase = {
 	readonly [K in string]: (...params: never[]) => Promise<Awaitable<RPCValue>>;
 };
 
