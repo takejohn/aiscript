@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { RCPUnknownError, RPCClient, RPCError, RPCServer } from '../src/utils/rpc.js';
+import { RPCUnknownError, RPCClient, RPCError, RPCServer } from '../src/utils/rpc.js';
 
 describe('RPC', () => {
 	const methods = {
@@ -74,11 +74,11 @@ describe('RPC', () => {
 
 	test.concurrent('unknown error', async () => {
 		const { client } = createServerClient();
-		await expect(client.methods.error()).rejects.toBeInstanceOf(RCPUnknownError);
+		await expect(client.methods.error()).rejects.toBeInstanceOf(RPCUnknownError);
 	});
 
 	test.concurrent('thrown not error', async () => {
 		const { client } = createServerClient();
-		await expect(client.methods.throwNotError()).rejects.toBeInstanceOf(RCPUnknownError);
+		await expect(client.methods.throwNotError()).rejects.toBeInstanceOf(RPCUnknownError);
 	});
 });

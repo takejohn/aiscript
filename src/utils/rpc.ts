@@ -61,9 +61,9 @@ export class RPCError<T extends ErrorDetail = ErrorDetail> extends Error {
 	}
 }
 
-export class RCPUnknownError extends Error {
+export class RPCUnknownError extends Error {
 	static {
-		RCPUnknownError.prototype.name = 'RCPUnknownError';
+		RPCUnknownError.prototype.name = 'RPCUnknownError';
 	}
 
 	constructor(detail: UnknownErrorDetail) {
@@ -121,7 +121,7 @@ export class RPCClient<Methods extends MethodsBase> {
 		} else if (response.checked) {
 			throw new RPCError(response.error);
 		} else {
-			throw new RCPUnknownError(response.error);
+			throw new RPCUnknownError(response.error);
 		}
 	}
 
