@@ -48,7 +48,7 @@ type CloneablePrimitive = string | number | bigint | boolean | undefined | null;
 シリアライズ可能オブジェクトを受け取り、デシリアライズ可能オブジェクトを返す関数の遠隔呼び出しを実現する。
 
 ```typescript
-ype SerializableEndpoint<T> = Endpoint<Serializable<T>>;
+type SerializableEndpoint<T> = Endpoint<Serializable<T>>;
 
 declare var SerializableEndpoint: {
 	new<T>(underlying: RpcEndpoint, serializer: Serializer<T>, handler: EndpointHandler<Serializable<T>>): SerializableEndpoint<T>;

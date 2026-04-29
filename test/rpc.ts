@@ -1,5 +1,7 @@
-import { describe, expect, test } from 'vitest';
-import { RpcEndpoint } from '../src/worker/messaging/rpc.js';
+import { describe, expect, test, vi } from 'vitest';
+import { Cloneable, RpcEndpoint } from '../src/worker/messaging/rpc.js';
+import { SerializableEndpoint } from '../src/worker/messaging/serializable.js';
+import { EndpointInitializer } from '../src/worker/messaging/types.js';
 
 describe('Messaging', () => {
 	describe('rpc', () => {
@@ -49,6 +51,69 @@ describe('Messaging', () => {
 		test.concurrent('throw number', async () => {
 			const { endpoint1 } = createEndpoints(add1, throwNumber);
 			await expect(endpoint1.request(1)).rejects.toThrow(Error);
+		});
+
+		test.concurrent('initializer', async () => {
+			const channel = new MessageChannel();
+			const endpoint1 = new RpcEndpoint<number>(channel.port1, fail)
+			const initializer = RpcEndpoint.initializer<number>(channel.port2);
+			const endpoint2 = initializer(add1);
+			await expect(endpoint1.request(1)).resolves.toBe(2);
 		})
 	});
+
+	describe('serializable', () => {
+		const identicalSerializer = {
+			serialize<T extends Cloneable>(value: T): T {
+				return value;
+			},
+
+			deserialize<T extends Cloneable>(serialized: T): T {
+				return serialized;
+			}
+		};
+
+		test.concurrent('identical serializer, handler', async () => {
+			const remoteHandler = () => expect.unreachable('remoteHandler will not be called');
+			const underlyingInitializer = vi.fn<EndpointInitializer<number>>()
+				.mockReturnValueOnce({ request: remoteHandler });
+
+			const _endpoint = new SerializableEndpoint<number, number>(
+				underlyingInitializer,
+				identicalSerializer,
+				(value) => value + 1
+			);
+
+			expect(underlyingInitializer).toHaveBeenCalledOnce();
+			const [handler] = underlyingInitializer.mock.calls[0];
+			await expect(handler(1)).resolves.toBe(2);
+		});
+
+		test.concurrent('identical serializer, request', async () => {
+			const remoteHandler = vi.fn<(req: number) => Promise<number>>()
+				.mockResolvedValueOnce(2);
+			const underlyingInitializer = vi.fn<EndpointInitializer<number>>()
+				.mockReturnValueOnce({ request: remoteHandler });
+
+			const endpoint = new SerializableEndpoint<number, number>(
+				underlyingInitializer,
+				identicalSerializer,
+				() => expect.fail('will not be called')
+			);
+
+			expect(underlyingInitializer).toHaveBeenCalledOnce();
+			expect(remoteHandler).toHaveBeenCalledTimes(0);
+			await expect(endpoint.request(1)).resolves.toBe(2);
+			expect(remoteHandler).toHaveBeenCalledOnce();
+			expect(remoteHandler).toHaveBeenCalledWith(1);
+		});
+
+		test.concurrent('initializer', async () => {
+			const initializer = SerializableEndpoint.initializer<number, number>(() => ({
+				request: (req) => Promise.resolve(req + 1),
+			}), identicalSerializer);
+			const endpoint = initializer(() => expect.fail('will not be called'));
+			await expect(endpoint.request(1)).resolves.toBe(2);
+		})
+	})
 });

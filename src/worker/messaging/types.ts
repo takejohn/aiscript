@@ -7,4 +7,6 @@ export interface Endpoint<Req, Res = Req> {
 
 export type EndpointHandler<Req, Res = Req> = (req: Req) => Awaitable<Res>;
 
+export type EndpointInitializer<Req, Res = Req> = (handler: EndpointHandler<Req, Res>) => Endpoint<Req, Res>;
+
 export type Awaitable<T> = T | PromiseLike<T>;

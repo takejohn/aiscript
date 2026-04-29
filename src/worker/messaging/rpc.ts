@@ -1,6 +1,6 @@
 import { autobind } from '../../utils/mini-autobind.js';
 import { IdAllocator } from './allocator.js';
-import type { Endpoint, EndpointHandler } from './types.js';
+import type { Endpoint, EndpointHandler, EndpointInitializer } from './types.js';
 
 export type Cloneable = { readonly [key: string]: Cloneable } | readonly Cloneable[] | CloneablePrimitive;
 
@@ -41,6 +41,10 @@ export class RpcEndpoint<T extends Cloneable> implements Endpoint<T> {
 		this.port = port;
 		this.handler = handler;
 		port.addEventListener('message', this.onMessage);
+	}
+
+	static initializer<T extends Cloneable>(port: MessagePort): EndpointInitializer<T> {
+		return (handler) => new RpcEndpoint(port, handler);
 	}
 
 	@autobind
