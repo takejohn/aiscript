@@ -1,84 +1,54 @@
 import { describe, expect, test } from 'vitest';
-import { RPCUnknownError, RPCClient, RPCError, RPCServer } from '../src/utils/rpc.js';
+import { RpcEndpoint } from '../src/worker/messaging/rpc.js';
 
-describe('RPC', () => {
-	const methods = {
-		async add(a: number, b: number): Promise<number> {
-			return a + b;
-		},
-
-		async subtract(a: number, b: number): Promise<number> {
-			return a - b;
-		},
-
-		async identical<T>(x: T): Promise<T> {
-			return x;
-		},
-
-		async rpcError(): Promise<never> {
-			throw new RPCError({ message: 'error message' });
-		},
-
-		async rpcErrorWithName(): Promise<never> {
-			throw new RPCError({ name: 'Error Name', message: 'error message' });
-		},
-
-		async error(): Promise<never> {
-			throw new Error();
-		},
-
-		async throwNotError(): Promise<never> {
-			throw null;
+describe('Messaging', () => {
+	describe('rpc', () => {
+		function createEndpoints(handler1: (value: number) => number, handler2: (value: number) => number) {
+			const channel = new MessageChannel();
+			const endpoint1 = new RpcEndpoint(channel.port1, handler1);
+			const endpoint2 = new RpcEndpoint(channel.port2, handler2);
+			return { endpoint1, endpoint2 };
 		}
-	};
 
-	const createServerClient = () => {
-		const server = new RPCServer(methods, (response) => client.receive(response));
-		const client = new RPCClient<typeof methods>((request) => server.receive(request));
-		return { server, client };
-	}
+		const fail = () => { throw new Error('not implemented'); };
+		const throwNull = () => { throw null; };
+		const throwNumber = () => { throw 42; };
+		const add1 = (value: number) => value + 1;
+		const mul2 = (value: number) => value * 2;
 
-	test.concurrent('normal', async () => {
-		const { client } = createServerClient();
-		await expect(client.methods.add(1, 2)).resolves.toBe(3);
-	});
+		test.concurrent('normal', async () => {
+			const { endpoint1 } = createEndpoints(fail, mul2);
+			await expect(endpoint1.request(1)).resolves.toBe(2);
+		});
 
-	test.concurrent('call many times', async () => {
-		const { client } = createServerClient();
-		await expect(Promise.all([
-			client.methods.add(1, 2),
-			client.methods.subtract(3, 4),
-			client.methods.add(5, 6),
-		])).resolves.toStrictEqual([3, -1, 11]);
-	});
+		test.concurrent('request many times', async () => {
+			const { endpoint1 } = createEndpoints(fail, mul2);
+			await expect(Promise.all([
+				endpoint1.request(1),
+				endpoint1.request(2),
+				endpoint1.request(3),
+			])).resolves.toStrictEqual([2, 4, 6]);
+		});
 
-	test.concurrent('generic', async () => {
-		const { client } = createServerClient();
-		const res: number = await client.methods.identical(42);
-		expect(res).toBe(42);
-	});
+		test.concurrent('another endpoint', async () => {
+			const { endpoint1, endpoint2 } = createEndpoints(add1, mul2);
+			await expect(endpoint1.request(3)).resolves.toBe(6);
+			await expect(endpoint2.request(3)).resolves.toBe(4);
+		});
 
-	test.concurrent('error', async () => {
-		const { client } = createServerClient();
-		await expect(client.methods.rpcError()).rejects.toStrictEqual(
-			new RPCError({ message: 'error message' }),
-		);
-	});
+		test.concurrent('error', async () => {
+			const { endpoint1 } = createEndpoints(add1, fail);
+			await expect(endpoint1.request(1)).rejects.toThrow('not implemented');
+		});
 
-	test.concurrent('error with name', async () => {
-		const { client } = createServerClient();
-		await expect(client.methods.rpcErrorWithName()).rejects.toStrictEqual(
-			new RPCError({ name: 'Error Name', message: 'error message' }),
-		);
-	});
+		test.concurrent('throw null', async () => {
+			const { endpoint1 } = createEndpoints(add1, throwNull);
+			await expect(endpoint1.request(1)).rejects.toThrow(Error);
+		});
 
-	test.concurrent('unknown error', async () => {
-		const { client } = createServerClient();
-		await expect(client.methods.error()).rejects.toBeInstanceOf(RPCUnknownError);
-	});
-
-	test.concurrent('thrown not error', async () => {
-		const { client } = createServerClient();
-		await expect(client.methods.throwNotError()).rejects.toBeInstanceOf(RPCUnknownError);
+		test.concurrent('throw number', async () => {
+			const { endpoint1 } = createEndpoints(add1, throwNumber);
+			await expect(endpoint1.request(1)).rejects.toThrow(Error);
+		})
 	});
 });
