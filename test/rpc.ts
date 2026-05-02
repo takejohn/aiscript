@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { Cloneable, RpcEndpoint } from '../src/worker/messaging/rpc.js';
 import { SerializableEndpoint } from '../src/worker/messaging/serializable.js';
 import { EndpointInitializer } from '../src/worker/messaging/types.js';
+import { RpcMethods, TypedRpcEndpoint } from '../src/worker/messaging/typed-rpc.js';
 
 describe('Messaging', () => {
 	describe('rpc', () => {
@@ -114,6 +115,53 @@ describe('Messaging', () => {
 			}), identicalSerializer);
 			const endpoint = initializer(() => expect.fail('will not be called'));
 			await expect(endpoint.request(1)).resolves.toBe(2);
-		})
-	})
+		});
+	});
+
+	describe('typed', () => {
+		function createEndpoints<Methods1 extends RpcMethods, Methods2 extends RpcMethods>(methods1: Methods1, methods2: Methods2) {
+			const channel = new MessageChannel();
+			const endpoint1 = new TypedRpcEndpoint<Methods2>(RpcEndpoint.initializer(channel.port1), methods1);
+			const endpoint2 = new TypedRpcEndpoint<Methods1>(RpcEndpoint.initializer(channel.port2), methods2);
+			return { endpoint1, endpoint2 };
+		}
+
+		const emptyMethods = {};
+
+		const arithmeticMethods = {
+			add: (a: number, b: number) => a + b,
+			sub: (a: number, b: number) => a - b,
+			mul: (a: number, b: number) => a * b,
+			div: (a: number, b: number) => a / b,
+			neg: (a: number) => -a,
+		};
+
+		test.concurrent('normal', async () => {
+			const { endpoint1 } = createEndpoints(emptyMethods, arithmeticMethods);
+			await expect(endpoint1.request('add', 1, 2)).resolves.toBe(3);
+		});
+
+		test.concurrent('request many', async () => {
+			const { endpoint1 } = createEndpoints(emptyMethods, arithmeticMethods);
+			await expect(Promise.all([
+				endpoint1.request('add', 1, 2),
+				endpoint1.request('sub', 3, 4),
+				endpoint1.request('mul', 5, 6),
+			])).resolves.toStrictEqual([3, -1, 30]);
+		});
+
+		test.concurrent('another endpoint', async () => {
+			const methods1 = { call1: vi.fn(() => 1) };
+			const methods2 = { call2: vi.fn(() => 2) };
+			const { endpoint1, endpoint2 } = createEndpoints(methods1, methods2);
+
+			const res1 = await endpoint1.request('call2');
+			expect(methods2.call2).toHaveBeenCalledOnce();
+			expect(res1).toBe(2);
+
+			const res2 = await endpoint2.request('call1');
+			expect(methods1.call1).toHaveBeenCalledOnce();
+			expect(res2).toBe(1);
+		});
+	});
 });

@@ -6,7 +6,7 @@ export type Cloneable = { readonly [key: string]: Cloneable } | readonly Cloneab
 
 type CloneablePrimitive = string | number | bigint | boolean | undefined | null;
 
-type Message<T extends Cloneable> = Request<T> | Response<T>;
+type Message<Req extends Cloneable, Res extends Cloneable> = Request<Req> | Response<Res>;
 
 type Request<T extends Cloneable> = {
 	type: 'request';
@@ -32,26 +32,26 @@ type ResponseErr = ResponseBase & {
 	error?: string;
 };
 
-export class RpcEndpoint<T extends Cloneable> implements Endpoint<T> {
+export class RpcEndpoint<Req extends Cloneable, Res extends Cloneable = Req> implements Endpoint<Req, Res> {
 	private port: MessagePort;
-	private handler: EndpointHandler<T>;
-	private resolvers = new IdAllocator<(response: Response<T>) => void>();
+	private handler: EndpointHandler<Req, Res>;
+	private resolvers = new IdAllocator<(response: Response<Res>) => void>();
 
-	constructor(port: MessagePort, handler: EndpointHandler<T>) {
+	constructor(port: MessagePort, handler: EndpointHandler<Req, Res>) {
 		this.port = port;
 		this.handler = handler;
 		port.addEventListener('message', this.onMessage);
 	}
 
-	static initializer<T extends Cloneable>(port: MessagePort): EndpointInitializer<T> {
+	static initializer<Req extends Cloneable, Res extends Cloneable = Req>(port: MessagePort): EndpointInitializer<Req, Res> {
 		return (handler) => new RpcEndpoint(port, handler);
 	}
 
 	@autobind
-	async request(req: T): Promise<T> {
-		const response = await new Promise<Response<T>>((resolve) => {
+	async request(req: Req): Promise<Res> {
+		const response = await new Promise<Response<Res>>((resolve) => {
 			const id = this.resolvers.alloc(resolve);
-			const message: Message<T> = { type: 'request', payload: req, id };
+			const message: Message<Req, Res> = { type: 'request', payload: req, id };
 			this.port.postMessage(message);
 		});
 		if (response.ok) {
@@ -62,11 +62,11 @@ export class RpcEndpoint<T extends Cloneable> implements Endpoint<T> {
 	}
 
 	@autobind
-	private onMessage(ev: MessageEvent<Message<T>>): void {
+	private onMessage(ev: MessageEvent<Message<Req, Res>>): void {
 		const message = ev.data;
 		switch (message.type) {
 			case 'request': {
-				this.wrapHandler(message).then((response: Message<T>) => this.port.postMessage(response));
+				this.wrapHandler(message).then((response: Message<Req, Res>) => this.port.postMessage(response));
 				break;
 			}
 			case 'response': {
@@ -78,7 +78,7 @@ export class RpcEndpoint<T extends Cloneable> implements Endpoint<T> {
 	}
 
 	@autobind
-	private async wrapHandler(request: Request<T>): Promise<Response<T>> {
+	private async wrapHandler(request: Request<Req>): Promise<Response<Res>> {
 		const id = request.id;
 		try {
 			const result = await this.handler(request.payload);
@@ -89,7 +89,11 @@ export class RpcEndpoint<T extends Cloneable> implements Endpoint<T> {
 	}
 }
 
-class InternalRpcError extends Error {}
+class InternalRpcError extends Error {
+	static {
+		InternalRpcError.prototype.name = 'InternalRpcError';
+	}
+}
 
 function getMessageStringProperty(value: unknown): string | undefined {
 	if (value == null) {
