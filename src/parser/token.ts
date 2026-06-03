@@ -195,3 +195,10 @@ export function keywordTokenKindToString(token: KeywordTokenKind): string {
 		}
 	}
 }
+
+export type TokenComment = {
+	type: 'line' | 'range';
+	startPos: TokenPosition;
+	endPos: TokenPosition;
+	content: string;
+};

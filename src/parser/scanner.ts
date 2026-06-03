@@ -5,7 +5,7 @@ import { TOKEN, TokenKind } from './token.js';
 import { unexpectedTokenError } from './utils.js';
 
 import type { ITokenStream } from './streams/token-stream.js';
-import type { Token, TokenPosition } from './token.js';
+import type { Token, TokenComment, TokenPosition } from './token.js';
 
 const spaceChars = [' ', '\t'];
 const lineBreakChars = ['\r', '\n'];
@@ -21,6 +21,8 @@ const hexDigit = /^[0-9a-fA-F]$/;
 export class Scanner implements ITokenStream {
 	private stream: CharStream;
 	private _tokens: Token[] = [];
+
+	private comments: TokenComment[] = [];
 
 	constructor(source: string)
 	constructor(stream: CharStream)
@@ -212,14 +214,15 @@ export class Scanner implements ITokenStream {
 					return TOKEN(TokenKind.Dot, pos, { hasLeftSpacing });
 				}
 				case '/': {
+					const startPos = this.stream.getPos();
 					this.stream.next();
 					if (!this.stream.eof && (this.stream.char as string) === '*') {
 						this.stream.next();
-						this.skipCommentRange();
+						this.skipCommentRange(startPos);
 						continue;
 					} else if (!this.stream.eof && (this.stream.char as string) === '/') {
 						this.stream.next();
-						this.skipCommentLine();
+						this.skipCommentLine(startPos);
 						continue;
 					} else {
 						return TOKEN(TokenKind.Slash, pos, { hasLeftSpacing });
@@ -689,15 +692,16 @@ export class Scanner implements ITokenStream {
 				continue;
 			}
 
+			const startPos = this.stream.getPos();
 			if (this.stream.char === '/') {
 				this.stream.next();
 				if (!this.stream.eof && (this.stream.char as string) === '*') {
 					this.stream.next();
-					this.skipCommentRange();
+					this.skipCommentRange(startPos);
 					continue;
 				} else if (!this.stream.eof && (this.stream.char as string) === '/') {
 					this.stream.next();
-					this.skipCommentLine();
+					this.skipCommentLine(startPos);
 					continue;
 				} else {
 					this.stream.prev();
@@ -708,35 +712,43 @@ export class Scanner implements ITokenStream {
 		}
 	}
 
-	private skipCommentLine(): void {
-		while (true) {
-			if (this.stream.eof) {
-				break;
-			}
-			if (this.stream.char === '\n') {
-				break;
-			}
+	private skipCommentLine(startPos: TokenPosition): void {
+		let content = '';
+		while (!(this.stream.eof as boolean) && (this.stream.char as string) !== '\n') {
+			content += this.stream.char;
 			this.stream.next();
 		}
+		this.comments.push({
+			type: 'line',
+			startPos,
+			endPos: this.stream.getPos(),
+			content,
+		});
 	}
 
-	private skipCommentRange(): void {
-		while (true) {
-			if (this.stream.eof) {
-				throw new AiScriptUnexpectedEOFError(this.stream.getPos());
-			}
-			if (this.stream.char === '*') {
+	private skipCommentRange(startPos: TokenPosition): void {
+		let content = '';
+		while (!(this.stream.eof as boolean)) {
+			if ((this.stream.char as string) === '*') {
 				this.stream.next();
 				if (this.stream.eof) {
 					throw new AiScriptUnexpectedEOFError(this.stream.getPos());
 				}
 				if ((this.stream.char as string) === '/') {
 					this.stream.next();
-					break;
 				}
-				continue;
+				this.comments.push({
+					type: 'range',
+					startPos,
+					endPos: this.stream.getPos(),
+					content,
+				});
+				return;
 			}
+			content += this.stream.char;
 			this.stream.next();
 		}
+
+		throw new AiScriptUnexpectedEOFError(this.stream.getPos());
 	}
 }
