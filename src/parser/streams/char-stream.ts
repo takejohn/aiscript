@@ -11,21 +11,23 @@ export class CharStream {
 	/** based on UTF-16 code unit */
 	private address: number;
 	/** Unicode character */
-	private _char?: string;
+	private _char: string | undefined;
 	/** zero-based number */
 	private line: number;
 	/** zero-based number, based on UTF-16 code unit */
 	private column: number;
 
-	constructor(source: string, opts?: { line?: number, column?: number }) {
+	public static readonly DEFAULT_OPTS = { line: 0, column: 0 } as const;
+
+	constructor(source: string, opts: { line: number, column: number }) {
 		this.pages = new Map();
 		this.pages.set(0, source);
 		this.firstPageIndex = 0;
 		this.lastPageIndex = 0;
 		this.pageIndex = 0;
 		this.address = 0;
-		this.line = opts?.line ?? 0;
-		this.column = opts?.column ?? 0;
+		this.line = opts.line;
+		this.column = opts.column;
 		this.moveNext();
 	}
 

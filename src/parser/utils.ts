@@ -33,7 +33,7 @@ export function CALL_NODE(
 	}, start, end);
 }
 
-export function unexpectedTokenError(token: TokenKind, pos: Ast.Pos, info?: unknown): AiScriptError {
+export function unexpectedTokenError(token: TokenKind, pos: Ast.Pos, info: unknown): AiScriptError {
 	if (token === TokenKind.EOF) {
 		return new AiScriptUnexpectedEOFError(pos, info);
 	} else {

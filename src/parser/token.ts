@@ -119,20 +119,26 @@ export class Token {
 	constructor(
 		public kind: TokenKind,
 		public pos: TokenPosition,
-		public hasLeftSpacing = false,
+		public hasLeftSpacing: boolean,
 		/** for number literal, string literal */
-		public value?: string,
+		public value: string | undefined,
 		/** for template syntax */
-		public children?: Token[],
+		public children: Token[] | undefined,
 	) { }
+
+	public static readonly DEFAULT_OPTS: Readonly<Parameters<typeof TOKEN>[2]> = {
+		hasLeftSpacing: false,
+		value: undefined,
+		children: undefined,
+	};
 }
 
 /**
  * - opts.value: for number literal, string literal
  * - opts.children: for template syntax
 */
-export function TOKEN(kind: TokenKind, pos: TokenPosition, opts?: { hasLeftSpacing?: boolean, value?: Token['value'], children?: Token['children'] }): Token {
-	return new Token(kind, pos, opts?.hasLeftSpacing, opts?.value, opts?.children);
+export function TOKEN(kind: TokenKind, pos: TokenPosition, opts: { hasLeftSpacing: boolean, value: Token['value'], children: Token['children'] }): Token {
+	return new Token(kind, pos, opts.hasLeftSpacing, opts.value, opts.children);
 }
 
 const KEYWORDS = [

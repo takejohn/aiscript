@@ -131,5 +131,17 @@ export default ts.config({
 			// caughtErrorsIgnorePattern: "^_",
 			destructuredArrayIgnorePattern: "^_",
 		}],
+
+		"no-restricted-syntax": [
+			"error",
+			{
+				"selector": ":matches(FunctionDeclaration, FunctionExpression, ArrowFunctionExpression) > .params:matches(Identifier[optional=true], AssignmentPattern), TSParameterProperty > :matches(Identifier[optional=true], AssignmentPattern)",
+				"message": "Declaring optional parameter is not allowed",
+			},
+			{
+				"selector": "PropertyDefinition[optional=true], TSPropertySignature[optional=true]",
+				"message": "Declaring optional property is not allowed",
+			},
+		],
 	},
 });

@@ -4,9 +4,9 @@ export abstract class AiScriptError extends Error {
 	// name is read by Error.prototype.toString
 	public name = 'AiScript';
 	public info: unknown;
-	public pos?: Pos;
+	public pos: Pos | undefined;
 
-	constructor(message: string, info?: unknown) {
+	constructor(message: string, info: unknown) {
 		super(message);
 
 		this.info = info;
@@ -25,7 +25,7 @@ export class NonAiScriptError extends AiScriptError {
 	public name = 'Internal';
 	constructor(error: unknown) {
 		const message = String(
-			(error as { message?: unknown } | null | undefined)?.message ?? error,
+			(error as { message: unknown } | null | undefined)?.message ?? error,
 		);
 		super(message, error);
 	}
@@ -36,7 +36,7 @@ export class NonAiScriptError extends AiScriptError {
  */
 export class AiScriptSyntaxError extends AiScriptError {
 	public name = 'Syntax';
-	constructor(message: string, public pos: Pos, info?: unknown) {
+	constructor(message: string, public pos: Pos, info: unknown) {
 		super(`${message} (Line ${pos.line}, Column ${pos.column})`, info);
 	}
 }
@@ -45,7 +45,7 @@ export class AiScriptSyntaxError extends AiScriptError {
  * Unexpected EOF errors.
  */
 export class AiScriptUnexpectedEOFError extends AiScriptSyntaxError {
-	constructor(pos: Pos, info?: unknown) {
+	constructor(pos: Pos, info: unknown) {
 		super('unexpected EOF', pos, info);
 	}
 }
@@ -55,7 +55,7 @@ export class AiScriptUnexpectedEOFError extends AiScriptSyntaxError {
  */
 export class AiScriptTypeError extends AiScriptError {
 	public name = 'Type';
-	constructor(message: string, public pos: Pos, info?: unknown) {
+	constructor(message: string, public pos: Pos, info: unknown) {
 		super(`${message} (Line ${pos.line}, Column ${pos.column})`, info);
 	}
 }
@@ -65,7 +65,7 @@ export class AiScriptTypeError extends AiScriptError {
  */
 export class AiScriptNamespaceError extends AiScriptError {
 	public name = 'Namespace';
-	constructor(message: string, public pos: Pos, info?: unknown) {
+	constructor(message: string, public pos: Pos, info: unknown) {
 		super(`${message} (Line ${pos.line}, Column ${pos.column})`, info);
 	}
 }
@@ -75,7 +75,7 @@ export class AiScriptNamespaceError extends AiScriptError {
  */
 export class AiScriptRuntimeError extends AiScriptError {
 	public name = 'Runtime';
-	constructor(message: string, info?: unknown) {
+	constructor(message: string, info: unknown) {
 		super(message, info);
 	}
 }
@@ -83,7 +83,7 @@ export class AiScriptRuntimeError extends AiScriptError {
  * RuntimeError for illegal access to arrays.
  */
 export class AiScriptIndexOutOfRangeError extends AiScriptRuntimeError {
-	constructor(message: string, info?: unknown) {
+	constructor(message: string, info: unknown) {
 		super(message, info);
 	}
 }
@@ -92,7 +92,7 @@ export class AiScriptIndexOutOfRangeError extends AiScriptRuntimeError {
  */
 export class AiScriptUserError extends AiScriptRuntimeError {
 	public name = '';
-	constructor(message: string, info?: unknown) {
+	constructor(message: string, info: unknown) {
 		super(message, info);
 	}
 }
@@ -101,7 +101,7 @@ export class AiScriptUserError extends AiScriptRuntimeError {
  */
 export class AiScriptHostsideError extends AiScriptError {
 	public name = 'Host';
-	constructor(message: string, info?: unknown) {
+	constructor(message: string, info: unknown) {
 		super(message, info);
 	}
 }
