@@ -5,7 +5,7 @@ import type * as Ast from '../node.js';
 
 export function NODE<T extends Ast.Node['type']>(
 	type: T,
-	params: Omit<Extract<Ast.Node, { type: T }>, 'type' | 'loc'>,
+	params: Omit<Extract<Ast.Node, { type: T }>, 'type' | 'loc' | 'leadingComments' | 'trailingComments'>,
 	start: Ast.Pos,
 	end: Ast.Pos,
 ): Extract<Ast.Node, { type: T }> {

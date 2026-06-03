@@ -12,10 +12,23 @@ export type Loc = {
 	end: Pos;
 };
 
+export type Comment = CommentLine | CommentRange;
+
+type CommentBase = {
+	loc: Loc;
+	content: string;
+};
+
+export type CommentLine = CommentBase & { type: 'line' };
+
+export type CommentRange = CommentBase & { type: 'range' };
+
 export type Node = Namespace | Meta | Statement | Expression | TypeSource | Attribute;
 
 type NodeBase = {
 	loc: Loc; // コード位置
+	leadingComments?: Comment[];
+	trailingComments?: Comment[];
 };
 
 export type Namespace = NodeBase & {
